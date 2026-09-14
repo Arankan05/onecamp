@@ -54,16 +54,26 @@ Each feature module under `lib/features/` should follow:
 
 ---
 
-## 3. Security Rules Plan
+## 3. Security Rules & Role Strategy
 
-### Firestore
-- **Users**: Read: any auth user; Write: `request.auth.uid == userId`.
-- **Posts**: Read: any auth user; Create: any auth user; Update/Delete: `request.auth.uid == post.authorId`.
-- **Chats**: Read/Write: `request.auth.uid in chat.participantIds`.
-- **Communities**: Read: any auth user; Write: depends on member role.
+### Firestore Security Rules
+- **Authentication Required**: All read/write operations require a valid Firebase Auth session.
+- **User Profiles**: 
+    - Users can read all profiles (public info).
+    - Users can only create/update their own profile.
+    - **Role Escalation Protection**: Users cannot set their role to anything other than "student" during creation, and cannot change their role during updates.
+- **Posts & Social**: Only authors can edit or delete their own posts, comments, and likes.
+- **Chats**: Private. Only UIDs in the `participantIds` array can read or write messages within a chat.
+- **Marketplace**: Only the seller can manage their own listings.
+- **Notifications**: Users can only read and manage their own notifications.
+- **Campus Updates**: Read-only for students; write access restricted to `admin` or `staff` roles.
 
-### Storage
-- Users can only upload to their own directories or feature-specific directories with proper ownership checks.
+### Admin/Staff Role Strategy
+For the initial development phase, roles are managed via a `role` field in the `users` document. 
+- **Security Limitation**: Since client-side promotion is blocked, initial admin/staff accounts must have their `role` field updated manually in the Firebase Console.
+- **Long-term Solution**: Future production environments should use **Firebase Auth Custom Claims** to store user roles. This is more secure as it prevents unnecessary Firestore lookups in rules and is harder to spoof.
+
+---
 
 ---
 

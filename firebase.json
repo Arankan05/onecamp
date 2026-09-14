@@ -1,0 +1,28 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "onecamp-8ebce",
+          "appId": "1:671928731645:android:74ee78febcf360ad007b94",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "onecamp-8ebce",
+          "configurations": {
+            "android": "1:671928731645:android:74ee78febcf360ad007b94",
+            "ios": "1:671928731645:ios:fc5dc9e36652d89f007b94",
+            "macos": "1:671928731645:ios:fc5dc9e36652d89f007b94",
+            "web": "1:671928731645:web:edd19b0fee120fa8007b94",
+            "windows": "1:671928731645:web:2a203848878b44b2007b94"
+          }
+        }
+      }
+    }
+  }
+}
