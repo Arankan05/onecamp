@@ -41,6 +41,7 @@ class AuthRepository {
         'name': name.trim(),
         'email': email.trim(),
         'role': 'student',
+        'onboardingCompleted': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (error) {

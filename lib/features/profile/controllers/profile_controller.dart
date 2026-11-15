@@ -49,7 +49,6 @@ class ProfileController extends ChangeNotifier {
     notifyListeners();
   }
 
-
   Future<bool> updateProfile({
     required String uid,
     required String name,
@@ -57,6 +56,11 @@ class ProfileController extends ChangeNotifier {
     required String department,
     required int? academicYear,
     String? profileImageUrl,
+    String? university,
+    String? faculty,
+    String? degree,
+    List<String>? skills,
+    List<String>? interests,
   }) async {
     _status = ProfileStatus.loading;
     _errorMessage = null;
@@ -70,6 +74,11 @@ class ProfileController extends ChangeNotifier {
         department: department,
         academicYear: academicYear,
         profileImageUrl: profileImageUrl,
+        university: university,
+        faculty: faculty,
+        degree: degree,
+        skills: skills,
+        interests: interests,
       );
 
       await loadProfile(uid);
@@ -81,5 +90,4 @@ class ProfileController extends ChangeNotifier {
       return false;
     }
   }
-
 }

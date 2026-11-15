@@ -50,8 +50,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Registration successful!'),
+          content: Text('Registration successful! Please complete your profile.'),
         ),
+      );
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/',
+        (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

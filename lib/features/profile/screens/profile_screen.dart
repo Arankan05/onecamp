@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
 
-    if (shouldLogout == true) {
+    if (shouldLogout == true && mounted) {
       await _logout();
     }
   }
@@ -183,6 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           const SizedBox(height: 20),
 
+          // Profile picture.
           CircleAvatar(
             radius: 55,
             backgroundImage:
@@ -201,6 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 20),
 
+          // User name.
           Text(
             profile.name,
             style: const TextStyle(
@@ -211,6 +213,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 8),
 
+          // Email.
           Text(
             profile.email,
             style: const TextStyle(
@@ -221,6 +224,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 25),
 
+          // Personal information.
+          _buildSectionTitle('Personal Information'),
+
           _buildInfoTile(
             icon: Icons.badge_outlined,
             title: 'User Role',
@@ -228,24 +234,105 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           _buildInfoTile(
+            icon: Icons.info_outline,
+            title: 'Bio',
+            value: profile.bio?.isNotEmpty == true
+                ? profile.bio!
+                : 'Not added',
+          ),
+
+          const SizedBox(height: 16),
+
+          // Academic information.
+          _buildSectionTitle('Academic Information'),
+
+          _buildInfoTile(
+            icon: Icons.account_balance_outlined,
+            title: 'University',
+            value: profile.university?.isNotEmpty == true
+                ? profile.university!
+                : 'Not added',
+          ),
+
+          _buildInfoTile(
             icon: Icons.school_outlined,
+            title: 'Faculty',
+            value: profile.faculty?.isNotEmpty == true
+                ? profile.faculty!
+                : 'Not added',
+          ),
+
+          _buildInfoTile(
+            icon: Icons.menu_book_outlined,
+            title: 'Degree / Programme',
+            value: profile.degree?.isNotEmpty == true
+                ? profile.degree!
+                : 'Not added',
+          ),
+
+          _buildInfoTile(
+            icon: Icons.business_outlined,
             title: 'Department',
-            value: profile.department ?? 'Not added',
+            value: profile.department?.isNotEmpty == true
+                ? profile.department!
+                : 'Not added',
           ),
 
           _buildInfoTile(
             icon: Icons.calendar_today_outlined,
             title: 'Academic Year',
-            value: profile.academicYear?.toString() ??
-                'Not added',
+            value: profile.academicYear != null
+                ? 'Year ${profile.academicYear}'
+                : 'Not added',
           ),
 
+          const SizedBox(height: 16),
+
+          // Skills.
+          _buildSectionTitle('Skills'),
+
           _buildInfoTile(
-            icon: Icons.info_outline,
-            title: 'Bio',
-            value: profile.bio ?? 'Not added',
+            icon: Icons.code,
+            title: 'My Skills',
+            value: profile.skills.isEmpty
+                ? 'Not added'
+                : profile.skills.join(', '),
           ),
+
+          const SizedBox(height: 16),
+
+          // Interests.
+          _buildSectionTitle('Interests'),
+
+          _buildInfoTile(
+            icon: Icons.interests_outlined,
+            title: 'My Interests',
+            value: profile.interests.isEmpty
+                ? 'Not added'
+                : profile.interests.join(', '),
+          ),
+
+          const SizedBox(height: 20),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          bottom: 12,
+          top: 8,
+        ),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }

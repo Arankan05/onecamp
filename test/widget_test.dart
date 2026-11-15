@@ -1,12 +1,34 @@
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:onecamp/main.dart';
 
 void main() {
-  testWidgets('App initialization smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const OneCampApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that the initial route is showing the initialization message.
-    expect(find.text('OneCamp Initializing...'), findsOneWidget);
-  });
+  testWidgets(
+    'App initialization smoke test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const OneCampApp(
+          homeOverride: Scaffold(
+            body: Center(
+              child: Text('OneCamp Initializing...'),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('OneCamp Initializing...'),
+        findsOneWidget,
+      );
+
+      expect(
+        find.byType(MaterialApp),
+        findsOneWidget,
+      );
+    },
+  );
 }

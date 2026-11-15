@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
+import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+  static const String onboarding = '/onboarding';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
 
@@ -35,6 +37,12 @@ class AppRoutes {
       case forgotPassword:
         return MaterialPageRoute(
           builder: (_) => const ForgotPasswordScreen(),
+          settings: settings,
+        );
+
+      case onboarding:
+        return MaterialPageRoute(
+          builder: (_) => const OnboardingScreen(),
           settings: settings,
         );
 

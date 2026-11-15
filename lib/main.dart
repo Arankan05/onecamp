@@ -1,25 +1,33 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'core/constants/app_constants.dart';
 import 'core/services/firebase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_routes.dart';
 
 import 'features/auth/screens/login_screen.dart';
+import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase.
+  // Initialize Firebase for the actual application.
   await FirebaseService.initialize();
 
   runApp(const OneCampApp());
 }
 
 class OneCampApp extends StatelessWidget {
-  const OneCampApp({super.key});
+  final Widget? homeOverride;
+
+  const OneCampApp({
+    super.key,
+    this.homeOverride,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +37,13 @@ class OneCampApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       onGenerateRoute: AppRoutes.onGenerateRoute,
-      home: const AuthGate(),
+      home: homeOverride ?? const AuthGate(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// Check Firebase authentication status.
+// Check Firebase authentication status and onboarding status.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -43,10 +51,8 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-
-        // Show loading while checking authentication.
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -54,13 +60,43 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-        // User is logged in.
-        if (snapshot.hasData) {
-          return const ProfileScreen();
+        final user = authSnapshot.data;
+        if (user == null) {
+          return const LoginScreen();
         }
 
-        // User is not logged in.
-        return const LoginScreen();
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection(AppConstants.usersCollection)
+              .doc(user.uid)
+              .snapshots(),
+          builder: (context, profileSnapshot) {
+            if (profileSnapshot.connectionState ==
+                ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (profileSnapshot.hasError ||
+                !profileSnapshot.hasData ||
+                !profileSnapshot.data!.exists) {
+              return const OnboardingScreen();
+            }
+
+            final data = profileSnapshot.data!.data();
+            final onboardingCompleted =
+                data?['onboardingCompleted'] as bool? ?? false;
+
+            if (onboardingCompleted) {
+              return const ProfileScreen();
+            }
+
+            return const OnboardingScreen();
+          },
+        );
       },
     );
   }

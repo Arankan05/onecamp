@@ -22,7 +22,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
+  final _universityController = TextEditingController();
+  final _facultyController = TextEditingController();
+  final _degreeController = TextEditingController();
   final _departmentController = TextEditingController();
+  final _skillsController = TextEditingController();
+  final _interestsController = TextEditingController();
 
   final ProfileController _profileController = ProfileController();
   final CloudinaryService _cloudinaryService = CloudinaryService();
@@ -42,7 +47,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadProfile();
   }
 
-  // Load the current user's profile from Firestore.
   Future<void> _loadProfile() async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -62,29 +66,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (profile != null) {
       _nameController.text = profile.name;
       _bioController.text = profile.bio ?? '';
+      _universityController.text = profile.university ?? '';
+      _facultyController.text = profile.faculty ?? '';
+      _degreeController.text = profile.degree ?? '';
       _departmentController.text = profile.department ?? '';
       _academicYear = profile.academicYear;
       _profileImageUrl = profile.profileImageUrl;
+      _skillsController.text = profile.skills.join(', ');
+      _interestsController.text = profile.interests.join(', ');
     }
 
     setState(() => _isLoading = false);
   }
 
-  // Open the gallery and select a profile picture.
   Future<void> _pickImage() async {
     try {
-      debugPrint('Opening image picker...');
-
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
         maxWidth: 800,
       );
 
-      if (image == null) {
-        debugPrint('No image selected.');
-        return;
-      }
+      if (image == null) return;
 
       final Uint8List bytes = await image.readAsBytes();
 
@@ -94,11 +97,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _selectedImage = image;
         _selectedImageBytes = bytes;
       });
-
-      debugPrint('Image selected: ${image.name}');
     } catch (error) {
-      debugPrint('Image picker error: $error');
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +108,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // Upload the image and save profile details.
+  List<String> _parseList(String value) {
+    return value
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toSet()
+        .toList();
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -129,7 +136,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       String? imageUrl = _profileImageUrl;
 
-      // Upload a new image only if one was selected.
       if (_selectedImage != null) {
         imageUrl = await _cloudinaryService.uploadProfileImage(
           _selectedImage!,
@@ -140,8 +146,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         uid: user.uid,
         name: _nameController.text,
         bio: _bioController.text,
+        university: _universityController.text,
+        faculty: _facultyController.text,
+        degree: _degreeController.text,
         department: _departmentController.text,
         academicYear: _academicYear,
+        skills: _parseList(_skillsController.text),
+        interests: _parseList(_interestsController.text),
         profileImageUrl: imageUrl,
       );
 
@@ -184,9 +195,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _bioController.dispose();
+    _universityController.dispose();
+    _facultyController.dispose();
+    _degreeController.dispose();
     _departmentController.dispose();
+    _skillsController.dispose();
+    _interestsController.dispose();
     _profileController.dispose();
     super.dispose();
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    int maxLines = 1,
+    String? hint,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        border: const OutlineInputBorder(),
+      ),
+      validator: validator,
+    );
   }
 
   @override
@@ -215,7 +250,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Profile picture and image selection button.
               Center(
                 child: Column(
                   children: [
@@ -231,9 +265,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
-                      onPressed: _isSaving
-                          ? null
-                          : _pickImage,
+                      onPressed:
+                      _isSaving ? null : _pickImage,
                       icon: const Icon(Icons.camera_alt),
                       label: const Text(
                         'Choose Profile Picture',
@@ -245,16 +278,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 24),
 
-              // Full name.
-              TextFormField(
+              _buildTextField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Full Name',
                 validator: (value) {
-                  if (value == null ||
-                      value.trim().isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Please enter your name.';
                   }
                   return null;
@@ -263,30 +291,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 16),
 
-              // Bio.
-              TextFormField(
+              _buildTextField(
                 controller: _bioController,
+                label: 'Bio',
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Bio',
-                  border: OutlineInputBorder(),
+              ),
+
+              const SizedBox(height: 24),
+
+              const Text(
+                'Academic Information',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // Department.
-              TextFormField(
+              _buildTextField(
+                controller: _universityController,
+                label: 'University',
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                controller: _facultyController,
+                label: 'Faculty',
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                controller: _degreeController,
+                label: 'Degree / Programme',
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildTextField(
                 controller: _departmentController,
-                decoration: const InputDecoration(
-                  labelText: 'Department',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Department',
               ),
 
               const SizedBox(height: 16),
 
-              // Academic year.
               DropdownButtonFormField<int>(
                 initialValue: _academicYear,
                 decoration: const InputDecoration(
@@ -301,7 +351,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 )
                     .toList(),
-                onChanged: (value) {
+                onChanged: _isSaving
+                    ? null
+                    : (value) {
                   setState(() {
                     _academicYear = value;
                   });
@@ -310,9 +362,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 24),
 
-              // Save changes.
+              const Text(
+                'Skills and Interests',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                controller: _skillsController,
+                label: 'Skills',
+                maxLines: 2,
+                hint: 'Example: Flutter, Java, Python',
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildTextField(
+                controller: _interestsController,
+                label: 'Interests',
+                maxLines: 2,
+                hint: 'Example: AI, Robotics, Sports',
+              ),
+
+              const SizedBox(height: 24),
+
               ElevatedButton(
-                onPressed: _isSaving ? null : _saveProfile,
+                onPressed:
+                _isSaving ? null : _saveProfile,
                 child: _isSaving
                     ? const SizedBox(
                   height: 20,
