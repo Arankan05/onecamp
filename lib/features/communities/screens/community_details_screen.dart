@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../controllers/community_controller.dart';
 import '../models/community.dart';
 import '../widgets/members_tab.dart';
+import '../widgets/posts_tab.dart';
 
 class CommunityDetailsScreen extends StatefulWidget {
   const CommunityDetailsScreen({super.key, required this.communityId});
@@ -86,7 +87,10 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      const Center(child: Text('Posts coming next')),
+                                            PostsTab(
+                        controller: _controller,
+                        communityId: widget.communityId,
+                      ),
                       const Center(child: Text('Announcements coming next')),
                       MembersTab(
                         controller: _controller,
