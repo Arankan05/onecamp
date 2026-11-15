@@ -127,16 +127,20 @@ class EventRepository {
       throw StateError('Event with ID ${event.id} does not exist.');
     }
 
-    final existingOrganizerId =
-        existingDoc.data()?['organizerId'] as String?;
+    final existingData = existingDoc.data();
+    final existingOrganizerId = existingData?['organizerId'] as String?;
     if (existingOrganizerId != uid) {
       throw StateError(
           'Permission denied: You are not the organizer of this event.');
     }
 
+    final existingAttendeeCount =
+        (existingData?['attendeeCount'] as num?)?.toInt() ?? 0;
+
     final updateData = event.toMap();
-    // Strictly preserve original organizerId and createdAt
+    // Strictly preserve original organizerId, existing attendeeCount, and createdAt
     updateData['organizerId'] = existingOrganizerId;
+    updateData['attendeeCount'] = existingAttendeeCount;
     updateData.remove('createdAt');
 
     await _eventsCollection.doc(event.id).update(updateData);
@@ -181,6 +185,12 @@ class EventRepository {
     final uid = currentUserId;
     if (uid == null || uid.isEmpty) {
       throw StateError('User must be signed in to register for an event.');
+    }
+
+    // Verify parent event exists before registering attendance
+    final eventDoc = await _eventsCollection.doc(eventId).get();
+    if (!eventDoc.exists || eventDoc.data() == null) {
+      throw StateError('Event with ID $eventId does not exist.');
     }
 
     final attendeeDocRef = _attendeesCollection(eventId).doc(uid);

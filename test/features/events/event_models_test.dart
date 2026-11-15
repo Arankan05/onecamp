@@ -31,6 +31,7 @@ void main() {
       expect((map['dateTime'] as Timestamp).toDate(), equals(now));
       expect(map['latitude'], equals(6.9271));
       expect(map['longitude'], equals(79.8612));
+      expect(map['attendeeCount'], equals(15));
 
       final restored = EventModel.fromMap('evt_123', map);
 
@@ -59,6 +60,33 @@ void main() {
       expect(event.imageUrl, isNull);
       expect(event.attendeeCount, equals(0));
     });
+
+    test('copyWith updates specified fields while preserving others', () {
+      final now = DateTime(2026, 11, 15, 10, 0);
+      final event = EventModel(
+        id: 'evt_1',
+        title: 'Original Title',
+        description: 'Original Description',
+        category: 'Sports',
+        dateTime: now,
+        locationName: 'Gym',
+        organizerId: 'org_1',
+        organizerName: 'Sports Club',
+        attendeeCount: 10,
+        createdAt: now,
+      );
+
+      final updated = event.copyWith(
+        title: 'Updated Title',
+        attendeeCount: 25,
+      );
+
+      expect(updated.title, equals('Updated Title'));
+      expect(updated.attendeeCount, equals(25));
+      expect(updated.id, equals('evt_1'));
+      expect(updated.description, equals('Original Description'));
+      expect(updated.organizerId, equals('org_1'));
+    });
   });
 
   group('EventAttendeeModel Tests', () {
@@ -79,13 +107,28 @@ void main() {
       expect(map['userName'], equals('John Doe'));
       expect(map['registeredAt'], isA<Timestamp>());
 
-      final restored = EventAttendeeModel.fromMap('usr_user_1', map, eventId: 'evt_123');
+      final restored =
+          EventAttendeeModel.fromMap('usr_user_1', map, eventId: 'evt_123');
 
       expect(restored.id, equals('usr_user_1'));
       expect(restored.userId, equals('usr_user_1'));
       expect(restored.eventId, equals('evt_123'));
       expect(restored.userName, equals('John Doe'));
     });
+
+    test('EventAttendeeModel copyWith correctly replaces attributes', () {
+      final now = DateTime(2026, 11, 15, 12, 00);
+      final attendee = EventAttendeeModel(
+        id: 'usr_2',
+        eventId: 'evt_1',
+        userId: 'usr_2',
+        userName: 'Jane',
+        registeredAt: now,
+      );
+
+      final copied = attendee.copyWith(userName: 'Jane Smith');
+      expect(copied.userName, equals('Jane Smith'));
+      expect(copied.userId, equals('usr_2'));
+    });
   });
 }
-

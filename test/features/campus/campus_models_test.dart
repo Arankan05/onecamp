@@ -50,6 +50,28 @@ void main() {
       expect(update.isUrgent, isFalse);
       expect(update.category, equals('General'));
     });
+
+    test('copyWith updates fields while preserving others', () {
+      final now = DateTime(2026, 11, 15, 8, 0);
+      final update = CampusUpdateModel(
+        id: 'upd_1',
+        title: 'Sports Notice',
+        body: 'Football trials today.',
+        category: 'Sports',
+        authorId: 'usr_coach',
+        authorName: 'Coach Dave',
+        createdAt: now,
+      );
+
+      final modified = update.copyWith(
+        isUrgent: true,
+        body: 'Football trials postponed to tomorrow.',
+      );
+
+      expect(modified.isUrgent, isTrue);
+      expect(modified.body, equals('Football trials postponed to tomorrow.'));
+      expect(modified.title, equals('Sports Notice'));
+      expect(modified.authorId, equals('usr_coach'));
+    });
   });
 }
-
