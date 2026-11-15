@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/community_controller.dart';
 import '../models/community.dart';
+import '../widgets/members_tab.dart';
 
 class CommunityDetailsScreen extends StatefulWidget {
   const CommunityDetailsScreen({super.key, required this.communityId});
@@ -82,12 +83,15 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
             body: Column(
               children: [
                 _buildHeader(community),
-                const Expanded(
+                Expanded(
                   child: TabBarView(
                     children: [
-                      Center(child: Text('Posts coming next')),
-                      Center(child: Text('Announcements coming next')),
-                      Center(child: Text('Members coming next')),
+                      const Center(child: Text('Posts coming next')),
+                      const Center(child: Text('Announcements coming next')),
+                      MembersTab(
+                        controller: _controller,
+                        communityId: widget.communityId,
+                      ),
                     ],
                   ),
                 ),
@@ -122,7 +126,7 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
                   return isMember
                       ? OutlinedButton(
                           onPressed: () => _toggleMembership(true),
-                          child: const Text('Join or Leave placeholder'),
+                          child: const Text('Leave'),
                         )
                       : ElevatedButton(
                           onPressed: () => _toggleMembership(false),
