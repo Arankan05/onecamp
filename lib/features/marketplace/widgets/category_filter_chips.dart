@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../theme/marketplace_theme.dart';
 
-/// Horizontal scrollable list of category filter chips for Marketplace.
+/// Horizontal scrollable list of category filter chips styled according to Figma specifications.
 class CategoryFilterChips extends StatelessWidget {
   final String selectedCategory;
   final ValueChanged<String> onCategorySelected;
@@ -15,33 +16,42 @@ class CategoryFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return SizedBox(
-      height: 48,
+      height: 42,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: AppConstants.marketplaceCategories.length,
         itemBuilder: (context, index) {
-          final category = AppConstants.marketplaceCategories[index];
-          final isSelected = selectedCategory == category;
+          final rawCategory = AppConstants.marketplaceCategories[index];
+          final displayLabel = rawCategory == 'All' ? 'For You' : rawCategory;
+          final isSelected = selectedCategory == rawCategory;
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(category),
+            child: ChoiceChip(
+              label: Text(displayLabel),
               selected: isSelected,
-              onSelected: (_) => onCategorySelected(category),
-              selectedColor: theme.colorScheme.primaryContainer,
-              checkmarkColor: theme.colorScheme.primary,
+              onSelected: (_) => onCategorySelected(rawCategory),
+              selectedColor: MarketplaceTheme.primary,
+              backgroundColor: MarketplaceTheme.cardBackground,
+              showCheckmark: false,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected
+                      ? MarketplaceTheme.primary
+                      : MarketplaceTheme.outline,
+                ),
+              ),
               labelStyle: TextStyle(
                 color: isSelected
-                    ? theme.colorScheme.onPrimaryContainer
-                    : theme.colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ? Colors.white
+                    : MarketplaceTheme.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 13,
               ),
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           );
         },
