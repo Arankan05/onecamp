@@ -4,6 +4,7 @@ import '../controllers/community_controller.dart';
 import '../models/community.dart';
 import '../widgets/members_tab.dart';
 import '../widgets/posts_tab.dart';
+import '../widgets/announcements_tab.dart';
 
 class CommunityDetailsScreen extends StatefulWidget {
   const CommunityDetailsScreen({super.key, required this.communityId});
@@ -91,7 +92,12 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
                         controller: _controller,
                         communityId: widget.communityId,
                       ),
-                      const Center(child: Text('Announcements coming next')),
+                                            AnnouncementsTab(
+                        controller: _controller,
+                        communityId: widget.communityId,
+                        isCreator:
+                            community.createdBy == _controller.currentUserId,
+                      ),
                       MembersTab(
                         controller: _controller,
                         communityId: widget.communityId,
