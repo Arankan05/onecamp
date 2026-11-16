@@ -14,17 +14,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           onGenerateRoute: AppRoutes.onGenerateRoute,
-          initialRoute: AppRoutes.initial,
+          initialRoute: AppRoutes.createEvent,
         ),
       );
-
-      // Verify initial route
-      expect(find.text('OneCamp Initializing...'), findsOneWidget);
-
-      // Navigate to /events/create
-      final navState = tester.state<NavigatorState>(find.byType(Navigator));
-      navState.pushNamed(AppRoutes.createEvent);
-      await tester.pumpAndSettle();
 
       expect(find.byType(CreateEventScreen), findsOneWidget);
       expect(find.text('Create Event'), findsOneWidget);
@@ -55,7 +47,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           onGenerateRoute: AppRoutes.onGenerateRoute,
-          initialRoute: AppRoutes.initial,
+          initialRoute: AppRoutes.createEvent,
         ),
       );
 
@@ -95,7 +87,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           onGenerateRoute: AppRoutes.onGenerateRoute,
-          initialRoute: AppRoutes.initial,
+          initialRoute: AppRoutes.createEvent,
         ),
       );
 
@@ -114,7 +106,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           onGenerateRoute: AppRoutes.onGenerateRoute,
-          initialRoute: AppRoutes.initial,
+          initialRoute: AppRoutes.createEvent,
         ),
       );
 

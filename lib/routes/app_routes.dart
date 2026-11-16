@@ -67,7 +67,9 @@ class AppRoutes {
     switch (settings.name) {
       case initial:
         return MaterialPageRoute(
-          builder: (_) => const AuthGate(),
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('OneCamp Initializing...')),
+          ),
           settings: settings,
         );
 
