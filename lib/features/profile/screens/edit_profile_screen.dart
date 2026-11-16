@@ -1,10 +1,11 @@
-
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/responsive_form_container.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_profile.dart';
 import '../services/cloudinary_service.dart';
@@ -103,6 +104,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Could not select image: $error'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -175,6 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               _profileController.errorMessage ??
                   'Failed to update profile.',
             ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -186,6 +189,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Upload or update failed: $error'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -205,27 +209,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    int maxLines = 1,
-    String? hint,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
-      ),
-      validator: validator,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     ImageProvider? imageProvider;
 
     if (_selectedImageBytes != null) {
@@ -241,172 +227,276 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       body: _isLoading
           ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
+              child: CircularProgressIndicator(),
+            )
+          : ResponsiveFormContainer(
+              maxWidth: 640,
+              child: Form(
+                key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CircleAvatar(
-                      radius: 55,
-                      backgroundImage: imageProvider,
-                      child: imageProvider == null
-                          ? const Icon(
-                        Icons.person,
-                        size: 60,
-                      )
-                          : null,
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed:
-                      _isSaving ? null : _pickImage,
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text(
-                        'Choose Profile Picture',
+                    // Profile Image Picker Section
+                    Center(
+                      child: Column(
+                        children: [
+                          Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary,
+                                    width: 3,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 52,
+                                  backgroundColor: theme.colorScheme.primary
+                                      .withValues(alpha: 0.1),
+                                  backgroundImage: imageProvider,
+                                  child: imageProvider == null
+                                      ? Icon(
+                                          Icons.person,
+                                          size: 56,
+                                          color: theme.colorScheme.primary,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: theme.colorScheme.primary,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.camera_alt,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _isSaving ? null : _pickImage,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: _isSaving ? null : _pickImage,
+                            child: const Text('Choose Profile Picture'),
+                          ),
+                        ],
                       ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // Personal Information Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Personal Information',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _nameController,
+                              enabled: !_isSaving,
+                              decoration: const InputDecoration(
+                                labelText: 'Full Name',
+                                prefixIcon: Icon(Icons.person_outline),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter your name.';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _bioController,
+                              enabled: !_isSaving,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                labelText: 'Bio',
+                                prefixIcon: Icon(Icons.info_outline),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Academic Information Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.school_outlined,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Academic Information',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _universityController,
+                              enabled: !_isSaving,
+                              decoration: const InputDecoration(
+                                labelText: 'University',
+                                prefixIcon:
+                                    Icon(Icons.account_balance_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _facultyController,
+                              enabled: !_isSaving,
+                              decoration: const InputDecoration(
+                                labelText: 'Faculty',
+                                prefixIcon: Icon(Icons.domain_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _degreeController,
+                              enabled: !_isSaving,
+                              decoration: const InputDecoration(
+                                labelText: 'Degree / Programme',
+                                prefixIcon: Icon(Icons.history_edu_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _departmentController,
+                              enabled: !_isSaving,
+                              decoration: const InputDecoration(
+                                labelText: 'Department',
+                                prefixIcon: Icon(Icons.business_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<int>(
+                              initialValue: _academicYear,
+                              decoration: const InputDecoration(
+                                labelText: 'Academic Year',
+                                prefixIcon:
+                                    Icon(Icons.calendar_today_outlined),
+                              ),
+                              items: [1, 2, 3, 4, 5]
+                                  .map(
+                                    (year) => DropdownMenuItem<int>(
+                                      value: year,
+                                      child: Text('Year $year'),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: _isSaving
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        _academicYear = value;
+                                      });
+                                    },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Skills and Interests Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.star_outline,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Skills and Interests',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _skillsController,
+                              enabled: !_isSaving,
+                              maxLines: 2,
+                              decoration: const InputDecoration(
+                                labelText: 'Skills',
+                                hintText: 'Example: Flutter, Java, Python',
+                                prefixIcon: Icon(Icons.code_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _interestsController,
+                              enabled: !_isSaving,
+                              maxLines: 2,
+                              decoration: const InputDecoration(
+                                labelText: 'Interests',
+                                hintText: 'Example: AI, Robotics, Sports',
+                                prefixIcon: Icon(Icons.interests_outlined),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    CustomButton(
+                      text: 'Save Changes',
+                      onPressed: _isSaving ? null : _saveProfile,
+                      isLoading: _isSaving,
+                    ),
+
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 24),
-
-              _buildTextField(
-                controller: _nameController,
-                label: 'Full Name',
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your name.';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _bioController,
-                label: 'Bio',
-                maxLines: 3,
-              ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-                'Academic Information',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _universityController,
-                label: 'University',
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _facultyController,
-                label: 'Faculty',
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _degreeController,
-                label: 'Degree / Programme',
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _departmentController,
-                label: 'Department',
-              ),
-
-              const SizedBox(height: 16),
-
-              DropdownButtonFormField<int>(
-                initialValue: _academicYear,
-                decoration: const InputDecoration(
-                  labelText: 'Academic Year',
-                  border: OutlineInputBorder(),
-                ),
-                items: [1, 2, 3, 4, 5]
-                    .map(
-                      (year) => DropdownMenuItem<int>(
-                    value: year,
-                    child: Text('Year $year'),
-                  ),
-                )
-                    .toList(),
-                onChanged: _isSaving
-                    ? null
-                    : (value) {
-                  setState(() {
-                    _academicYear = value;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              const Text(
-                'Skills and Interests',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _skillsController,
-                label: 'Skills',
-                maxLines: 2,
-                hint: 'Example: Flutter, Java, Python',
-              ),
-
-              const SizedBox(height: 16),
-
-              _buildTextField(
-                controller: _interestsController,
-                label: 'Interests',
-                maxLines: 2,
-                hint: 'Example: AI, Robotics, Sports',
-              ),
-
-              const SizedBox(height: 24),
-
-              ElevatedButton(
-                onPressed:
-                _isSaving ? null : _saveProfile,
-                child: _isSaving
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-                    : const Text('Save Changes'),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

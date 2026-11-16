@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../routes/app_routes.dart';
 import '../community_constants.dart';
 import '../controllers/community_controller.dart';
 import '../models/community.dart';
-import 'community_details_screen.dart';
-import 'create_community_screen.dart';
 
 class CommunityListScreen extends StatefulWidget {
   const CommunityListScreen({super.key});
@@ -100,11 +99,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
       floatingActionButton: FloatingActionButton(
         tooltip: 'Create community',
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const CreateCommunityScreen(),
-            ),
-          );
+          Navigator.pushNamed(context, AppRoutes.createCommunity);
         },
         child: const Icon(Icons.add),
       ),
@@ -179,12 +174,10 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                         ),
                         trailing: Chip(label: Text(community.category)),
                         onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => CommunityDetailsScreen(
-                                communityId: community.id,
-                              ),
-                            ),
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.communityDetails,
+                            arguments: community.id,
                           );
                         },
                       ),

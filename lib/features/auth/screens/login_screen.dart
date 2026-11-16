@@ -1,6 +1,8 @@
-
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/responsive_form_container.dart';
 import '../controllers/auth_controller.dart';
 import '../models/auth_state.dart';
 
@@ -13,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthController _authController = AuthController();
-
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
@@ -28,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
@@ -55,14 +55,16 @@ class _LoginScreenState extends State<LoginScreen> {
             _authController.state.errorMessage ??
                 'Login failed. Please try again.',
           ),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
@@ -73,126 +75,166 @@ class _LoginScreenState extends State<LoginScreen> {
           final isLoading =
               _authController.state.status == AuthStatus.loading;
 
-          return Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Welcome Back!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+          return ResponsiveFormContainer(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // App Brand Logo Header
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.school_rounded,
+                        size: 56,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Login to your OneCamp account',
-                      textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppConstants.appName,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(height: 32),
-
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email Address',
-                        prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your email.';
-                        }
-
-                        if (!RegExp(
-                          r'^[^@]+@[^@]+\.[^@]+$',
-                        ).hasMatch(value.trim())) {
-                          return 'Please enter a valid email.';
-                        }
-
-                        return null;
-                      },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppConstants.appTagline,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 32),
 
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible =
-                                  !_isPasswordVisible;
-                            });
-                          },
+                  const Text(
+                    'Welcome Back!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Login to your OneCamp account',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    enabled: !isLoading,
+                    decoration: const InputDecoration(
+                      labelText: 'Email Address',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your email.';
+                      }
+
+                      if (!RegExp(
+                        r'^[^@]+@[^@]+\.[^@]+$',
+                      ).hasMatch(value.trim())) {
+                        return 'Please enter a valid email.';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                         ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password.';
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
                         onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/forgot-password',
-                          );
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
                         },
-                        child: const Text('Forgot Password?'),
                       ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password.';
+                      }
 
-                    const SizedBox(height: 16),
+                      return null;
+                    },
+                  ),
 
-                    ElevatedButton(
-                      onPressed: isLoading ? null : _login,
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('Login'),
+                  const SizedBox(height: 8),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              Navigator.pushNamed(
+                                context,
+                                '/forgot-password',
+                              );
+                            },
+                      child: const Text('Forgot Password?'),
                     ),
+                  ),
 
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Don't have an account?"),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/register',
-                            );
-                          },
-                          child: const Text('Register'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  CustomButton(
+                    text: 'Login',
+                    onPressed: isLoading ? null : _login,
+                    isLoading: isLoading,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account?",
+                        style: TextStyle(color: Colors.grey.shade700),
+                      ),
+                      TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/register',
+                                );
+                              },
+                        child: const Text('Register'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           );

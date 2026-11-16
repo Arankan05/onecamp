@@ -16,9 +16,13 @@ import '../features/events/models/event_model.dart';
 import '../features/events/screens/create_event_screen.dart';
 import '../features/events/screens/event_details_screen.dart';
 import '../features/events/screens/events_list_screen.dart';
+import '../features/communities/screens/community_details_screen.dart';
+import '../features/communities/screens/community_list_screen.dart';
+import '../features/communities/screens/create_community_screen.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../main.dart';
 
 class AppRoutes {
   static const String initial = '/';
@@ -30,8 +34,12 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
+  static const String communityList = '/communities';
+  static const String communityDetails = '/community-details';
+  static const String createCommunity = '/create-community';
 
   // Chat module routes
+  static const String devChatEntry = '/dev_chat_entry';
   static const String chatList = '/chat_list';
   static const String chatRoom = '/chat_room';
   static const String newChat = '/new_chat';
@@ -51,6 +59,7 @@ class AppRoutes {
       createGroup: (context) => const CreateGroupScreen(),
       eventsList: (context) => const EventsListScreen(),
       campusUpdates: (context) => const CampusUpdatesScreen(),
+      devChatEntry: (context) => const DevChatEntryScreen(),
     };
   }
 
@@ -58,9 +67,13 @@ class AppRoutes {
     switch (settings.name) {
       case initial:
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('OneCamp Initializing...')),
-          ),
+          builder: (_) => const AuthGate(),
+          settings: settings,
+        );
+
+      case devChatEntry:
+        return MaterialPageRoute(
+          builder: (_) => const DevChatEntryScreen(),
           settings: settings,
         );
 
@@ -109,6 +122,30 @@ class AppRoutes {
       case editProfile:
         return MaterialPageRoute(
           builder: (_) => const EditProfileScreen(),
+          settings: settings,
+        );
+
+      case communityList:
+        return MaterialPageRoute(
+          builder: (_) => const CommunityListScreen(),
+          settings: settings,
+        );
+
+      case communityDetails:
+        final args = settings.arguments;
+        final communityId = args is String
+            ? args
+            : (args is Map<String, dynamic>
+                ? args['communityId'] as String? ?? ''
+                : '');
+        return MaterialPageRoute(
+          builder: (_) => CommunityDetailsScreen(communityId: communityId),
+          settings: settings,
+        );
+
+      case createCommunity:
+        return MaterialPageRoute(
+          builder: (_) => const CreateCommunityScreen(),
           settings: settings,
         );
 
