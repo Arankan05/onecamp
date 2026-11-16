@@ -24,16 +24,31 @@ service cloud.firestore {
       return hasRole('admin') || hasRole('staff');
     }
 
-    // 1. Users
+    function isUserBlockedBy(targetUid, activeUid) {
+      return exists(/databases/$(database)/documents/users/$(targetUid)/blocked_users/$(activeUid));
+    }
+
+    // 1. Users & Blocked Subcollection
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId)
         && request.resource.data.role == 'student'
         && request.resource.data.uid == userId;
+
+      // User Profile Update: Role and UID are strictly immutable
       allow update: if isOwner(userId)
         && request.resource.data.role == resource.data.role
         && request.resource.data.uid == resource.data.uid;
       allow delete: if false; // Profiles shouldn't be easily deleted by clients
+
+      // Blocking: Owner can manage their block list; target user can check if they are blocked
+      match /blocked_users/{blockedId} {
+        allow read: if isSignedIn() && (isOwner(userId) || request.auth.uid == blockedId);
+        allow create: if isOwner(userId)
+          && blockedId != userId
+          && request.resource.data.uid == blockedId;
+        allow delete: if isOwner(userId);
+      }
     }
 
     // 2. Posts
@@ -106,21 +121,151 @@ service cloud.firestore {
       }
     }
 
-    // 5. Chats
+    // 5. Chats & Messages
     match /chats/{chatId} {
-      // Users can only see/modify chats they are part of
       allow read: if isSignedIn() && request.auth.uid in resource.data.participantIds;
-      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participantIds;
+
+      // Chat Creation Rule
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participantIds
+        && request.resource.data.type in ['direct', 'group']
+        && (
+          // Direct Chat: Exactly 2 participants; block check in both directions
+          (request.resource.data.type == 'direct'
+            && request.resource.data.participantIds is list
+            && request.resource.data.participantIds.size() == 2
+            && request.resource.data.participantIds.toSet().size() == 2
+            && !isUserBlockedBy(request.resource.data.participantIds[0] == request.auth.uid ? request.resource.data.participantIds[1] : request.resource.data.participantIds[0], request.auth.uid)
+            && !isUserBlockedBy(request.auth.uid, request.resource.data.participantIds[0] == request.auth.uid ? request.resource.data.participantIds[1] : request.resource.data.participantIds[0]))
+          ||
+          // Group Chat: At least 2 participants & valid groupName string
+          (request.resource.data.type == 'group'
+            && request.resource.data.participantIds is list
+            && request.resource.data.participantIds.size() >= 2
+            && request.resource.data.participantIds.toSet().size() == request.resource.data.participantIds.size()
+            && request.resource.data.groupName is string
+            && request.resource.data.groupName.size() > 0)
+        );
+
+      // Chat Updates (Metadata or User Preferences)
       allow update: if isSignedIn()
         && request.auth.uid in resource.data.participantIds
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt']);
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.participantIds == resource.data.participantIds
+        && (
+          // Metadata update (lastMessage, lastMessageAt, and resetting hiddenFor on new message)
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasAll(['lastMessage', 'lastMessageAt', 'hiddenFor'])
+            && request.resource.data.lastMessage != resource.data.lastMessage
+            && request.resource.data.hiddenFor == []
+          )
+          ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt'])
+          )
+          ||
+          // Preference update: Mute (User adds/removes ONLY their own UID)
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mutedBy'])
+            && request.resource.data.mutedBy is list
+            && (
+              (request.resource.data.mutedBy.hasAll(resource.data.mutedBy) && request.resource.data.mutedBy.size() == resource.data.mutedBy.size() + 1 && !(request.auth.uid in resource.data.mutedBy) && request.auth.uid in request.resource.data.mutedBy)
+              ||
+              ((request.resource.data.mutedBy.size() == 0 || resource.data.mutedBy.hasAll(request.resource.data.mutedBy)) && request.resource.data.mutedBy.size() == resource.data.mutedBy.size() - 1 && (request.auth.uid in resource.data.mutedBy) && !(request.auth.uid in request.resource.data.mutedBy))
+            ))
+          ||
+          // Preference update: Pin
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinnedBy'])
+            && request.resource.data.pinnedBy is list
+            && (
+              (request.resource.data.pinnedBy.hasAll(resource.data.pinnedBy) && request.resource.data.pinnedBy.size() == resource.data.pinnedBy.size() + 1 && !(request.auth.uid in resource.data.pinnedBy) && request.auth.uid in request.resource.data.pinnedBy)
+              ||
+              ((request.resource.data.pinnedBy.size() == 0 || resource.data.pinnedBy.hasAll(request.resource.data.pinnedBy)) && request.resource.data.pinnedBy.size() == resource.data.pinnedBy.size() - 1 && (request.auth.uid in resource.data.pinnedBy) && !(request.auth.uid in request.resource.data.pinnedBy))
+            ))
+          ||
+          // Preference update: Hide chat
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hiddenFor'])
+            && request.resource.data.hiddenFor is list
+            && request.resource.data.hiddenFor.hasAll(resource.data.hiddenFor)
+            && request.resource.data.hiddenFor.size() == resource.data.hiddenFor.size() + 1
+            && !(request.auth.uid in resource.data.hiddenFor)
+            && request.auth.uid in request.resource.data.hiddenFor)
+        );
 
       match /messages/{messageId} {
         allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
-        allow create: if isSignedIn() &&
-          request.resource.data.senderId == request.auth.uid &&
-          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
-        allow update, delete: if false; // Messages are immutable for now
+
+        allow create: if isSignedIn()
+          && request.resource.data.senderId == request.auth.uid
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds
+          && (
+            get(/databases/$(database)/documents/chats/$(chatId)).data.type != 'direct' ||
+            (
+              !isUserBlockedBy(
+                get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds[0] == request.auth.uid
+                  ? get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds[1]
+                  : get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds[0],
+                request.auth.uid
+              ) &&
+              !isUserBlockedBy(
+                request.auth.uid,
+                get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds[0] == request.auth.uid
+                  ? get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds[1]
+                  : get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds[0]
+              )
+            )
+          )
+          && request.resource.data.messageType in ['text', 'image', 'document', 'audio', 'voice']
+          && request.resource.data.readBy == [request.auth.uid]
+          && request.resource.data.isDeleted == false
+          && request.resource.data.hiddenFor == []
+          && (
+            (request.resource.data.messageType == 'text'
+              && request.resource.data.text is string
+              && request.resource.data.text.trim().size() > 0)
+            ||
+            (request.resource.data.messageType == 'image'
+              && request.resource.data.imageUrl is string
+              && request.resource.data.imageUrl.matches('^https://res\\.cloudinary\\.com/o5k43wz7/image/upload/.*'))
+            ||
+            (request.resource.data.messageType in ['document', 'audio', 'voice']
+              && request.resource.data.mediaUrl is string
+              && request.resource.data.mediaUrl.matches('^https://res\\.cloudinary\\.com/o5k43wz7/.*'))
+          );
+
+        // Message Updates (Read Receipts, Delete for Everyone, Hide for Me)
+        allow update: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds
+          && (
+            // 1. Read receipts
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+              && resource.data.readBy is list
+              && request.resource.data.readBy is list
+              && request.resource.data.readBy.hasAll(resource.data.readBy)
+              && request.resource.data.readBy.size() == resource.data.readBy.size() + 1
+              && !(request.auth.uid in resource.data.readBy)
+              && request.auth.uid in request.resource.data.readBy
+              && request.auth.uid != resource.data.senderId
+              && request.resource.data.readBy.toSet().size() == request.resource.data.readBy.size())
+            ||
+            // 2. Delete for Everyone (Original Sender only)
+            (request.auth.uid == resource.data.senderId
+              && resource.data.isDeleted == false
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'isDeleted', 'imageUrl', 'mediaUrl'])
+              && request.resource.data.isDeleted == true
+              && request.resource.data.text == 'This message was deleted')
+            ||
+            // 3. Delete for Me (Add current user UID to hiddenFor)
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hiddenFor'])
+              && resource.data.hiddenFor is list
+              && request.resource.data.hiddenFor is list
+              && request.resource.data.hiddenFor.hasAll(resource.data.hiddenFor)
+              && request.resource.data.hiddenFor.size() == resource.data.hiddenFor.size() + 1
+              && !(request.auth.uid in resource.data.hiddenFor)
+              && request.auth.uid in request.resource.data.hiddenFor
+              && request.resource.data.hiddenFor.toSet().size() == request.resource.data.hiddenFor.size())
+          );
+
+        allow delete: if false;
       }
     }
 
@@ -134,19 +279,48 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.sellerId == request.auth.uid;
     }
 
-    // 7. Notifications
+    // 7. Notifications & Reports
     match /notifications/{notifId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if false; // Notifications should only be created by system/admin
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        && request.resource.data.isRead is bool;
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid != request.auth.uid
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0;
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
 
     // 8. Campus Updates
     match /campus_updates/{updateId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
+    }
+
+    // 9. WebRTC Calls
+    match /calls/{callId} {
+      allow read, update, delete: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.targetId);
+      allow create: if isSignedIn()
+        && (request.auth.uid == request.resource.data.callerId || request.auth.uid == request.resource.data.targetId);
+
+      match /offerCandidates/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
+
+      match /answerCandidates/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
     }
   }
 }
