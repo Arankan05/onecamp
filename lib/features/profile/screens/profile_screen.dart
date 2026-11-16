@@ -1,7 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/responsive_form_container.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_profile.dart';
 
@@ -14,18 +15,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileController _profileController;
-
   bool _isLoggingOut = false;
 
   @override
   void initState() {
     super.initState();
-
     _profileController = ProfileController();
 
-    final User? currentUser =
-        FirebaseAuth.instance.currentUser;
-
+    final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       _profileController.loadProfile(currentUser.uid);
     }
@@ -37,27 +34,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // Show logout confirmation dialog.
   Future<void> _confirmLogout() async {
     final bool? shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Logout'),
-          content: const Text(
-            'Are you sure you want to log out?',
-          ),
+          content: const Text('Are you sure you want to log out?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(80, 40),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Logout'),
             ),
           ],
@@ -70,7 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Sign out the current Firebase user.
   Future<void> _logout() async {
     setState(() => _isLoggingOut = true);
 
@@ -82,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/login',
-            (route) => false,
+        (route) => false,
       );
     } catch (error) {
       if (!mounted) return;
@@ -92,6 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Logout failed: $error'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -99,15 +93,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final User? currentUser =
-        FirebaseAuth.instance.currentUser;
+    final theme = Theme.of(context);
+    final User? currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) {
       return const Scaffold(
         body: Center(
-          child: Text(
-            'Please log in to view your profile.',
-          ),
+          child: Text('Please log in to view your profile.'),
         ),
       );
     }
@@ -115,239 +107,538 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
-        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
             tooltip: 'Edit Profile',
             onPressed: _isLoggingOut
                 ? null
                 : () async {
-              final result = await Navigator.pushNamed(
-                context,
-                '/edit-profile',
-              );
+                    final result = await Navigator.pushNamed(
+                      context,
+                      '/edit-profile',
+                    );
 
-              if (result == true && mounted) {
-                _profileController.loadProfile(
-                  currentUser.uid,
-                );
-              }
-            },
+                    if (result == true && mounted) {
+                      _profileController.loadProfile(currentUser.uid);
+                    }
+                  },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             tooltip: 'Logout',
-            onPressed:
-            _isLoggingOut ? null : _confirmLogout,
+            onPressed: _isLoggingOut ? null : _confirmLogout,
           ),
         ],
       ),
       body: _isLoggingOut
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
+          ? const Center(child: CircularProgressIndicator())
           : AnimatedBuilder(
-        animation: _profileController,
-        builder: (context, child) {
-          switch (_profileController.status) {
-            case ProfileStatus.initial:
-            case ProfileStatus.loading:
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              animation: _profileController,
+              builder: (context, child) {
+                switch (_profileController.status) {
+                  case ProfileStatus.initial:
+                  case ProfileStatus.loading:
+                    return const Center(child: CircularProgressIndicator());
 
-            case ProfileStatus.error:
-              return Center(
-                child: Text(
-                  _profileController.errorMessage ??
-                      'Something went wrong.',
-                ),
-              );
+                  case ProfileStatus.error:
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(
+                          _profileController.errorMessage ??
+                              'Something went wrong.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
 
-            case ProfileStatus.success:
-              final UserProfile profile =
-              _profileController.profile!;
-
-              return _buildProfileContent(profile);
-          }
-        },
-      ),
+                  case ProfileStatus.success:
+                    final UserProfile profile = _profileController.profile!;
+                    return _buildProfileContent(profile, theme);
+                }
+              },
+            ),
     );
   }
 
-  Widget _buildProfileContent(UserProfile profile) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+  Widget _buildProfileContent(UserProfile profile, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    return ResponsiveFormContainer(
+      maxWidth: 580,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         children: [
-          const SizedBox(height: 20),
+          // 1. Header Card (Profile Picture, Name, Email, Role)
+          Card(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: AppTheme.lavenderGradient,
+              ),
+              child: Column(
+                children: [
+                  // Centered Profile Picture with Purple Border Ring
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.colorScheme.primary,
+                        width: 2.5,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 42,
+                      backgroundColor: AppTheme.secondaryColor,
+                      backgroundImage: profile.profileImageUrl != null &&
+                              profile.profileImageUrl!.isNotEmpty
+                          ? NetworkImage(profile.profileImageUrl!)
+                          : null,
+                      child: profile.profileImageUrl == null ||
+                              profile.profileImageUrl!.isEmpty
+                          ? Icon(
+                              Icons.person,
+                              size: 44,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
-          // Profile picture.
-          CircleAvatar(
-            radius: 55,
-            backgroundImage:
-            profile.profileImageUrl != null &&
-                profile.profileImageUrl!.isNotEmpty
-                ? NetworkImage(profile.profileImageUrl!)
-                : null,
-            child: profile.profileImageUrl == null ||
-                profile.profileImageUrl!.isEmpty
-                ? const Icon(
-              Icons.person,
-              size: 60,
-            )
-                : null,
-          ),
+                  // Name with Verified Checkmark Icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        profile.name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
 
-          const SizedBox(height: 20),
+                  const SizedBox(height: 4),
 
-          // User name.
-          Text(
-            profile.name,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+                  // Academic Subtitle (e.g. Degree · Year X · Faculty)
+                  if ([
+                    profile.degree,
+                    profile.academicYear != null
+                        ? 'Year ${profile.academicYear}'
+                        : null,
+                    profile.faculty,
+                  ].any((element) => element?.isNotEmpty == true))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        [
+                          if (profile.degree?.isNotEmpty == true)
+                            profile.degree,
+                          if (profile.academicYear != null)
+                            'Year ${profile.academicYear}',
+                          if (profile.faculty?.isNotEmpty == true)
+                            profile.faculty,
+                        ].join(' · '),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+
+                  // User Email
+                  Text(
+                    profile.email,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // User Role Badge
+                  Chip(
+                    avatar: Icon(
+                      Icons.badge_outlined,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
+                    label: Text(
+                      profile.role.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
-          // Email.
-          Text(
-            profile.email,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.grey,
+          // 2. "About You" White Rounded Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'About You',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF3730A3)
+                              : AppTheme.secondaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'PROFILE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Bio Box
+                  _buildInfoBox(
+                    label: 'BIO',
+                    value: profile.bio?.isNotEmpty == true
+                        ? profile.bio!
+                        : 'Not added',
+                    icon: Icons.notes_rounded,
+                    theme: theme,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Skills Section
+                  Text(
+                    'SKILLS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (profile.skills.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: profile.skills
+                          .map(
+                            (skill) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                skill,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF231F4C)
+                            : const Color(0xFFF8F6FE),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF3730A3)
+                              : const Color(0xFFE8E3FA),
+                        ),
+                      ),
+                      child: Text(
+                        'Not added',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.grey.shade500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Interests Section
+                  Text(
+                    'INTERESTS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (profile.interests.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: profile.interests
+                          .map(
+                            (interest) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF3730A3)
+                                    : AppTheme.secondaryColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF4C1D95)
+                                      : const Color(0xFFDDD6FE),
+                                ),
+                              ),
+                              child: Text(
+                                interest,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white
+                                      : theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF231F4C)
+                            : const Color(0xFFF8F6FE),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF3730A3)
+                              : const Color(0xFFE8E3FA),
+                        ),
+                      ),
+                      child: Text(
+                        'Not added',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.grey.shade500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 25),
+          const SizedBox(height: 16),
 
-          // Personal information.
-          _buildSectionTitle('Personal Information'),
+          // 3. "Academic Information" White Rounded Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Academic Information',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-          _buildInfoTile(
-            icon: Icons.badge_outlined,
-            title: 'User Role',
-            value: profile.role,
-          ),
+                  // University Box
+                  _buildInfoBox(
+                    label: 'UNIVERSITY',
+                    value: profile.university?.isNotEmpty == true
+                        ? profile.university!
+                        : 'Not added',
+                    icon: Icons.account_balance_outlined,
+                    theme: theme,
+                  ),
 
-          _buildInfoTile(
-            icon: Icons.info_outline,
-            title: 'Bio',
-            value: profile.bio?.isNotEmpty == true
-                ? profile.bio!
-                : 'Not added',
+                  // Faculty Box
+                  _buildInfoBox(
+                    label: 'FACULTY',
+                    value: profile.faculty?.isNotEmpty == true
+                        ? profile.faculty!
+                        : 'Not added',
+                    icon: Icons.domain_outlined,
+                    theme: theme,
+                  ),
+
+                  // Degree / Programme Box
+                  _buildInfoBox(
+                    label: 'DEGREE / PROGRAMME',
+                    value: profile.degree?.isNotEmpty == true
+                        ? profile.degree!
+                        : 'Not added',
+                    icon: Icons.school_outlined,
+                    theme: theme,
+                  ),
+
+                  // Department Box
+                  _buildInfoBox(
+                    label: 'DEPARTMENT',
+                    value: profile.department?.isNotEmpty == true
+                        ? profile.department!
+                        : 'Not added',
+                    icon: Icons.business_outlined,
+                    theme: theme,
+                  ),
+
+                  // Academic Year Box
+                  _buildInfoBox(
+                    label: 'ACADEMIC YEAR',
+                    value: profile.academicYear != null
+                        ? 'Year ${profile.academicYear}'
+                        : 'Not added',
+                    icon: Icons.calendar_today_outlined,
+                    theme: theme,
+                  ),
+                ],
+              ),
+            ),
           ),
 
           const SizedBox(height: 16),
-
-          // Academic information.
-          _buildSectionTitle('Academic Information'),
-
-          _buildInfoTile(
-            icon: Icons.account_balance_outlined,
-            title: 'University',
-            value: profile.university?.isNotEmpty == true
-                ? profile.university!
-                : 'Not added',
-          ),
-
-          _buildInfoTile(
-            icon: Icons.school_outlined,
-            title: 'Faculty',
-            value: profile.faculty?.isNotEmpty == true
-                ? profile.faculty!
-                : 'Not added',
-          ),
-
-          _buildInfoTile(
-            icon: Icons.menu_book_outlined,
-            title: 'Degree / Programme',
-            value: profile.degree?.isNotEmpty == true
-                ? profile.degree!
-                : 'Not added',
-          ),
-
-          _buildInfoTile(
-            icon: Icons.business_outlined,
-            title: 'Department',
-            value: profile.department?.isNotEmpty == true
-                ? profile.department!
-                : 'Not added',
-          ),
-
-          _buildInfoTile(
-            icon: Icons.calendar_today_outlined,
-            title: 'Academic Year',
-            value: profile.academicYear != null
-                ? 'Year ${profile.academicYear}'
-                : 'Not added',
-          ),
-
-          const SizedBox(height: 16),
-
-          // Skills.
-          _buildSectionTitle('Skills'),
-
-          _buildInfoTile(
-            icon: Icons.code,
-            title: 'My Skills',
-            value: profile.skills.isEmpty
-                ? 'Not added'
-                : profile.skills.join(', '),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Interests.
-          _buildSectionTitle('Interests'),
-
-          _buildInfoTile(
-            icon: Icons.interests_outlined,
-            title: 'My Interests',
-            value: profile.interests.isEmpty
-                ? 'Not added'
-                : profile.interests.join(', '),
-          ),
-
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: 12,
-          top: 8,
-        ),
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String title,
+  /// Builds an individual, light-coloured rounded information box
+  /// with a purple icon, small grey uppercase label, and saved value.
+  Widget _buildInfoBox({
+    required String label,
     required String value,
+    required IconData icon,
+    required ThemeData theme,
   }) {
-    return Card(
+    final isDark = theme.brightness == Brightness.dark;
+
+    final boxBgColor = isDark
+        ? const Color(0xFF231F4C)
+        : const Color(0xFFF8F6FE);
+
+    final borderColor = isDark
+        ? const Color(0xFF3730A3)
+        : const Color(0xFFE8E3FA);
+
+    return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text(value),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: boxBgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0x803730A3)
+                  : AppTheme.secondaryColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1F2937),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

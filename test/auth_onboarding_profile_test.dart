@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onecamp/features/profile/models/user_profile.dart';
 import 'package:onecamp/features/onboarding/controllers/onboarding_controller.dart';
@@ -126,6 +127,26 @@ void main() {
       expect(AppRoutes.onboarding, equals('/onboarding'));
       expect(AppRoutes.profile, equals('/profile'));
       expect(AppRoutes.editProfile, equals('/edit-profile'));
+      expect(AppRoutes.communityList, equals('/communities'));
+      expect(AppRoutes.communityDetails, equals('/community-details'));
+      expect(AppRoutes.createCommunity, equals('/create-community'));
+    });
+
+    test('onGenerateRoute returns correct MaterialPageRoute for community routes', () {
+      final listRoute = AppRoutes.onGenerateRoute(
+        const RouteSettings(name: AppRoutes.communityList),
+      );
+      expect(listRoute, isA<MaterialPageRoute>());
+
+      final detailsRoute = AppRoutes.onGenerateRoute(
+        const RouteSettings(name: AppRoutes.communityDetails, arguments: 'comm123'),
+      );
+      expect(detailsRoute, isA<MaterialPageRoute>());
+
+      final createRoute = AppRoutes.onGenerateRoute(
+        const RouteSettings(name: AppRoutes.createCommunity),
+      );
+      expect(createRoute, isA<MaterialPageRoute>());
     });
   });
 }
