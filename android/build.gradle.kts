@@ -20,18 +20,14 @@ subprojects {
 }
 
 subprojects {
-    plugins.withId("com.android.library") {
+    val configureAndroid = Action<Plugin<*>> {
         val android = project.extensions.findByName("android")
         if (android is com.android.build.gradle.BaseExtension) {
             android.compileSdkVersion(36)
         }
     }
-    plugins.withId("com.android.application") {
-        val android = project.extensions.findByName("android")
-        if (android is com.android.build.gradle.BaseExtension) {
-            android.compileSdkVersion(36)
-        }
-    }
+    plugins.withId("com.android.application", configureAndroid)
+    plugins.withId("com.android.library", configureAndroid)
 }
 
 tasks.register<Delete>("clean") {
