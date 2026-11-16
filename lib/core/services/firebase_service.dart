@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import '../../firebase_options.dart';
+import 'presence_service.dart';
 
 class FirebaseService {
   static Future<void> initialize() async {
@@ -16,5 +17,6 @@ class FirebaseService {
     } catch (e) {
       debugPrint('Anonymous sign-in skipped/failed: $e');
     }
+    PresenceService().initialize();
   }
 }

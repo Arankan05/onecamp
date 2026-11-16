@@ -12,6 +12,8 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+node_modules/
+package-lock.json
 
 # IntelliJ related
 *.iml

@@ -1,0 +1,14 @@
+{
+  "name": "onecamp-security-rules-tests",
+  "version": "1.0.0",
+  "description": "Isolated Firestore Security Rules Test Suite for OneCamp",
+  "main": "test/rules_test.js",
+  "scripts": {
+    "test": "jest --testMatch='**/test/rules_test.js' --forceExit"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.3",
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0"
+  }
+}
