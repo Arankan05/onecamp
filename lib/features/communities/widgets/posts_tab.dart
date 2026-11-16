@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../profile/models/user_profile.dart';
 import '../controllers/community_controller.dart';
+import '../controllers/user_lookup.dart';
 import '../models/community_post.dart';
 
 class PostsTab extends StatefulWidget {
@@ -19,6 +21,7 @@ class PostsTab extends StatefulWidget {
 
 class _PostsTabState extends State<PostsTab> {
   final _textController = TextEditingController();
+  final UserLookup _lookup = UserLookup();
 
   @override
   void dispose() {
@@ -52,8 +55,6 @@ class _PostsTabState extends State<PostsTab> {
     }
   }
 
-  String _shortId(String id) => id.length > 6 ? id.substring(0, 6) : id;
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -82,9 +83,27 @@ class _PostsTabState extends State<PostsTab> {
                   return Card(
                     margin:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: ListTile(
-                      title: Text(post.text),
-                      subtitle: Text('Member ${_shortId(post.authorId)}'),
+                    child: FutureBuilder<UserProfile?>(
+                      future: _lookup.getUser(post.authorId),
+                      builder: (context, userSnapshot) {
+                        final user = userSnapshot.data;
+                        final name = (user != null && user.name.isNotEmpty)
+                            ? user.name
+                            : 'Member ${shortId(post.authorId)}';
+                        final imageUrl = user?.profileImageUrl;
+                        final hasImage =
+                            imageUrl != null && imageUrl.isNotEmpty;
+
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage:
+                                hasImage ? NetworkImage(imageUrl) : null,
+                            child: hasImage ? null : const Icon(Icons.person),
+                          ),
+                          title: Text(post.text),
+                          subtitle: Text(name),
+                        );
+                      },
                     ),
                   );
                 },

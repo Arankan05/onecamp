@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../profile/models/user_profile.dart';
 import '../community_constants.dart';
 import '../controllers/community_controller.dart';
+import '../controllers/user_lookup.dart';
 import '../models/community_member.dart';
 
-class MembersTab extends StatelessWidget {
+class MembersTab extends StatefulWidget {
   const MembersTab({
     super.key,
     required this.controller,
@@ -14,12 +16,17 @@ class MembersTab extends StatelessWidget {
   final CommunityController controller;
   final String communityId;
 
-  String _shortId(String id) => id.length > 6 ? id.substring(0, 6) : id;
+  @override
+  State<MembersTab> createState() => _MembersTabState();
+}
+
+class _MembersTabState extends State<MembersTab> {
+  final UserLookup _lookup = UserLookup();
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<CommunityMember>>(
-      stream: controller.watchMembers(communityId),
+      stream: widget.controller.watchMembers(widget.communityId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -39,10 +46,29 @@ class MembersTab extends StatelessWidget {
           itemBuilder: (context, index) {
             final member = members[index];
             final isCreator = member.role == CommunityConstants.roleCreator;
-            return ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: Text('Member ${_shortId(member.userId)}'),
-              subtitle: isCreator ? const Text('Creator') : null,
+
+            return FutureBuilder<UserProfile?>(
+              future: _lookup.getUser(member.userId),
+              builder: (context, userSnapshot) {
+                final user = userSnapshot.data;
+                final name = (user != null && user.name.isNotEmpty)
+                    ? user.name
+                    : 'Member ${shortId(member.userId)}';
+                final imageUrl = user?.profileImageUrl;
+
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
+                        ? NetworkImage(imageUrl)
+                        : null,
+                    child: (imageUrl != null && imageUrl.isNotEmpty)
+                        ? null
+                        : const Icon(Icons.person),
+                  ),
+                  title: Text(name),
+                  subtitle: isCreator ? const Text('Creator') : null,
+                );
+              },
             );
           },
         );
