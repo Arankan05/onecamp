@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "671928731645",
+    "project_id": "onecamp-8ebce",
+    "storage_bucket": "onecamp-8ebce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671928731645:android:74ee78febcf360ad007b94",
+        "android_client_info": {
+          "package_name": "com.onecamp.onecamp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjjctKWQcMoElMUaTBOqLqDfdgSy70zQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
