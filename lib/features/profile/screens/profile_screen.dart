@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_form_container.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_profile.dart';
@@ -108,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('My Profile'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
             tooltip: 'Edit Profile',
             onPressed: _isLoggingOut
                 ? null
@@ -124,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             tooltip: 'Logout',
             onPressed: _isLoggingOut ? null : _confirmLogout,
           ),
@@ -162,264 +163,448 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileContent(UserProfile profile, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+
     return ResponsiveFormContainer(
-      maxWidth: 640,
-      padding: const EdgeInsets.all(20),
+      maxWidth: 580,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         children: [
-          const SizedBox(height: 12),
-
-          // Avatar & Header
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 3,
+          // 1. Header Card (Profile Picture, Name, Email, Role)
+          Card(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: AppTheme.lavenderGradient,
+              ),
+              child: Column(
+                children: [
+                  // Centered Profile Picture with Purple Border Ring
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.colorScheme.primary,
+                        width: 2.5,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 42,
+                      backgroundColor: AppTheme.secondaryColor,
+                      backgroundImage: profile.profileImageUrl != null &&
+                              profile.profileImageUrl!.isNotEmpty
+                          ? NetworkImage(profile.profileImageUrl!)
+                          : null,
+                      child: profile.profileImageUrl == null ||
+                              profile.profileImageUrl!.isEmpty
+                          ? Icon(
+                              Icons.person,
+                              size: 44,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
                     ),
                   ),
-                  child: CircleAvatar(
-                    radius: 52,
-                    backgroundColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.1),
-                    backgroundImage: profile.profileImageUrl != null &&
-                            profile.profileImageUrl!.isNotEmpty
-                        ? NetworkImage(profile.profileImageUrl!)
-                        : null,
-                    child: profile.profileImageUrl == null ||
-                            profile.profileImageUrl!.isEmpty
-                        ? Icon(
-                            Icons.person,
-                            size: 56,
-                            color: theme.colorScheme.primary,
-                          )
-                        : null,
+                  const SizedBox(height: 12),
+
+                  // Name with Verified Checkmark Icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        profile.name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
 
-                Text(
-                  profile.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 4),
+
+                  // User Email
+                  Text(
+                    profile.email,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 4),
+                  const SizedBox(height: 12),
 
-                Text(
-                  profile.email,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
+                  // User Role Badge
+                  Chip(
+                    avatar: Icon(
+                      Icons.badge_outlined,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
+                    label: Text(
+                      profile.role.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Chip(
-                  avatar: const Icon(Icons.badge_outlined, size: 16),
-                  label: Text(
-                    profile.role.toUpperCase(),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Personal Information Card
-          _buildCardSection(
-            theme: theme,
-            title: 'Personal Information',
-            icon: Icons.person_outline,
-            children: [
-              _buildInfoTile(
-                icon: Icons.info_outline,
-                title: 'Bio',
-                value: profile.bio?.isNotEmpty == true
-                    ? profile.bio!
-                    : 'Not added',
-              ),
-            ],
-          ),
+          // 2. "About You" White Rounded Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'About You',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF3730A3)
+                              : AppTheme.secondaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'PROFILE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-          // Academic Information Card
-          _buildCardSection(
-            theme: theme,
-            title: 'Academic Information',
-            icon: Icons.school_outlined,
-            children: [
-              _buildInfoTile(
-                icon: Icons.account_balance_outlined,
-                title: 'University',
-                value: profile.university?.isNotEmpty == true
-                    ? profile.university!
-                    : 'Not added',
-              ),
-              _buildInfoTile(
-                icon: Icons.domain_outlined,
-                title: 'Faculty',
-                value: profile.faculty?.isNotEmpty == true
-                    ? profile.faculty!
-                    : 'Not added',
-              ),
-              _buildInfoTile(
-                icon: Icons.history_edu_outlined,
-                title: 'Degree / Programme',
-                value: profile.degree?.isNotEmpty == true
-                    ? profile.degree!
-                    : 'Not added',
-              ),
-              _buildInfoTile(
-                icon: Icons.business_outlined,
-                title: 'Department',
-                value: profile.department?.isNotEmpty == true
-                    ? profile.department!
-                    : 'Not added',
-              ),
-              _buildInfoTile(
-                icon: Icons.calendar_today_outlined,
-                title: 'Academic Year',
-                value: profile.academicYear != null
-                    ? 'Year ${profile.academicYear}'
-                    : 'Not added',
-              ),
-            ],
-          ),
+                  // Bio Box
+                  _buildInfoBox(
+                    label: 'BIO',
+                    value: profile.bio?.isNotEmpty == true
+                        ? profile.bio!
+                        : 'Not added',
+                    icon: Icons.notes_rounded,
+                    theme: theme,
+                  ),
 
-          // Skills & Interests Card
-          _buildCardSection(
-            theme: theme,
-            title: 'Skills & Interests',
-            icon: Icons.star_outline,
-            children: [
-              const Text(
-                'Skills',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              profile.skills.isEmpty
-                  ? Text(
-                      'Not added',
-                      style: TextStyle(color: Colors.grey.shade600),
-                    )
-                  : Wrap(
+                  const SizedBox(height: 8),
+
+                  // Skills Section
+                  Text(
+                    'SKILLS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (profile.skills.isNotEmpty)
+                    Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: profile.skills
-                          .map((skill) => Chip(
-                                label: Text(skill),
-                                backgroundColor: theme.colorScheme.primary
-                                    .withValues(alpha: 0.08),
-                              ))
+                          .map(
+                            (skill) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                skill,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          )
                           .toList(),
-                    ),
-              const SizedBox(height: 16),
-              const Text(
-                'Interests',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              profile.interests.isEmpty
-                  ? Text(
-                      'Not added',
-                      style: TextStyle(color: Colors.grey.shade600),
                     )
-                  : Wrap(
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF231F4C)
+                            : const Color(0xFFF8F6FE),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF3730A3)
+                              : const Color(0xFFE8E3FA),
+                        ),
+                      ),
+                      child: Text(
+                        'Not added',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.grey.shade500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Interests Section
+                  Text(
+                    'INTERESTS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (profile.interests.isNotEmpty)
+                    Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: profile.interests
-                          .map((interest) => Chip(
-                                label: Text(interest),
-                                backgroundColor: theme.colorScheme.secondary
-                                    .withValues(alpha: 0.2),
-                                labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface,
-                                  fontWeight: FontWeight.w600,
+                          .map(
+                            (interest) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF3730A3)
+                                    : AppTheme.secondaryColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF4C1D95)
+                                      : const Color(0xFFDDD6FE),
                                 ),
-                              ))
+                              ),
+                              child: Text(
+                                interest,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white
+                                      : theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          )
                           .toList(),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF231F4C)
+                            : const Color(0xFFF8F6FE),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF3730A3)
+                              : const Color(0xFFE8E3FA),
+                        ),
+                      ),
+                      child: Text(
+                        'Not added',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.grey.shade500,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-            ],
+                ],
+              ),
+            ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // 3. "Academic Information" White Rounded Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Academic Information',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // University Box
+                  _buildInfoBox(
+                    label: 'UNIVERSITY',
+                    value: profile.university?.isNotEmpty == true
+                        ? profile.university!
+                        : 'Not added',
+                    icon: Icons.account_balance_outlined,
+                    theme: theme,
+                  ),
+
+                  // Faculty Box
+                  _buildInfoBox(
+                    label: 'FACULTY',
+                    value: profile.faculty?.isNotEmpty == true
+                        ? profile.faculty!
+                        : 'Not added',
+                    icon: Icons.domain_outlined,
+                    theme: theme,
+                  ),
+
+                  // Degree / Programme Box
+                  _buildInfoBox(
+                    label: 'DEGREE / PROGRAMME',
+                    value: profile.degree?.isNotEmpty == true
+                        ? profile.degree!
+                        : 'Not added',
+                    icon: Icons.school_outlined,
+                    theme: theme,
+                  ),
+
+                  // Department Box
+                  _buildInfoBox(
+                    label: 'DEPARTMENT',
+                    value: profile.department?.isNotEmpty == true
+                        ? profile.department!
+                        : 'Not added',
+                    icon: Icons.business_outlined,
+                    theme: theme,
+                  ),
+
+                  // Academic Year Box
+                  _buildInfoBox(
+                    label: 'ACADEMIC YEAR',
+                    value: profile.academicYear != null
+                        ? 'Year ${profile.academicYear}'
+                        : 'Not added',
+                    icon: Icons.calendar_today_outlined,
+                    theme: theme,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildCardSection({
-    required ThemeData theme,
-    required String title,
-    required IconData icon,
-    required List<Widget> children,
-  }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String title,
+  /// Builds an individual, light-coloured rounded information box
+  /// with a purple icon, small grey uppercase label, and saved value.
+  Widget _buildInfoBox({
+    required String label,
     required String value,
+    required IconData icon,
+    required ThemeData theme,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    final isDark = theme.brightness == Brightness.dark;
+
+    final boxBgColor = isDark
+        ? const Color(0xFF231F4C)
+        : const Color(0xFFF8F6FE);
+
+    final borderColor = isDark
+        ? const Color(0xFF3730A3)
+        : const Color(0xFFE8E3FA);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: boxBgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0x803730A3)
+                  : AppTheme.secondaryColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  title,
+                  label,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1F2937),
                   ),
                 ),
               ],

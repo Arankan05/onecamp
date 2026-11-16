@@ -15,7 +15,7 @@ class CustomButton extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.isOutlined = false,
-    this.height = 50.0,
+    this.height = 52.0,
   });
 
   @override
@@ -35,10 +35,10 @@ class CustomButton extends StatelessWidget {
                 onPressed: null,
                 child: Center(
                   child: SizedBox(
-                    height: 20,
-                    width: 20,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 2.5,
                       valueColor: AlwaysStoppedAnimation<Color>(spinnerColor),
                     ),
                   ),
@@ -48,10 +48,10 @@ class CustomButton extends StatelessWidget {
                 onPressed: null,
                 child: Center(
                   child: SizedBox(
-                    height: 20,
-                    width: 20,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 2.5,
                       valueColor: AlwaysStoppedAnimation<Color>(spinnerColor),
                     ),
                   ),
