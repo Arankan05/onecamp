@@ -28,6 +28,11 @@ void main() {
 
       expect(find.byType(CreateEventScreen), findsOneWidget);
       expect(find.text('Create Event'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Venue / Location Name *'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Venue / Location Name *'), findsOneWidget);
     });
 
@@ -61,6 +66,11 @@ void main() {
       expect(find.byType(CreateEventScreen), findsOneWidget);
       expect(find.text('Edit Event'), findsOneWidget);
       expect(find.text('Robotics Workshop'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Robotics Lab 1'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Robotics Lab 1'), findsOneWidget);
       expect(find.textContaining('6.9271, 79.8612'), findsOneWidget);
     });
@@ -122,7 +132,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           onGenerateRoute: AppRoutes.onGenerateRoute,
-          initialRoute: AppRoutes.initial,
+          initialRoute: AppRoutes.createEvent,
         ),
       );
 

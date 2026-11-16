@@ -21,7 +21,7 @@ dependencies:
 
   # Media, Audio & File dependencies
   image_picker: ^1.2.4
-  file_picker: ^13.0.0
+  file_picker: ^8.1.7
   audioplayers: ^6.1.0
   record: ^5.2.0
   permission_handler: ^11.3.1
@@ -31,7 +31,7 @@ dependencies:
   http: ^1.6.0
 
   cupertino_icons: ^1.0.8
-  geolocator: ^14.1.2
+  geolocator: ^13.0.2
 
 dev_dependencies:
   flutter_test:

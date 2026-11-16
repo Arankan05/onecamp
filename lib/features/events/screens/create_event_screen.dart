@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../routes/app_routes.dart';
 import '../controllers/event_controller.dart';
@@ -153,6 +154,89 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   onChanged: (val) {
                     if (val != null) _controller.setCategory(val);
                   },
+                ),
+                const SizedBox(height: 16),
+
+                // Event Image Banner (Cloudinary Upload)
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Event Banner Image',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (_controller.imageUrl != null)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  color: Colors.red),
+                              onPressed: () => _controller.removeImage(),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (_controller.isUploadingImage)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(height: 8),
+                                Text('Uploading banner to Cloudinary...'),
+                              ],
+                            ),
+                          ),
+                        )
+                      else if (_controller.imageUrl != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            _controller.imageUrl!,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Center(
+                              child: Text('Failed to load image preview'),
+                            ),
+                          ),
+                        )
+                      else
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                icon: const Icon(Icons.photo_library_outlined),
+                                label: const Text('Gallery'),
+                                onPressed: () => _controller
+                                    .pickAndUploadImage(ImageSource.gallery),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                icon: const Icon(Icons.camera_alt_outlined),
+                                label: const Text('Camera'),
+                                onPressed: () => _controller
+                                    .pickAndUploadImage(ImageSource.camera),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 

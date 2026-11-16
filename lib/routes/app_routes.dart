@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
+import '../features/campus/screens/campus_updates_screen.dart';
 import '../features/chat/screens/chat_details_screen.dart';
 import '../features/chat/screens/chat_list_screen.dart';
 import '../features/chat/screens/chat_room_screen.dart';
@@ -14,6 +15,7 @@ import '../features/chat/screens/new_chat_screen.dart';
 import '../features/events/models/event_model.dart';
 import '../features/events/screens/create_event_screen.dart';
 import '../features/events/screens/event_details_screen.dart';
+import '../features/events/screens/events_list_screen.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -36,15 +38,19 @@ class AppRoutes {
   static const String createGroup = '/create_group';
   static const String chatDetails = '/chat_details';
 
-  // Events Feature Routes
+  // Events & Campus Feature Routes
+  static const String eventsList = '/events';
   static const String createEvent = '/events/create';
   static const String eventDetails = '/events/details';
+  static const String campusUpdates = '/campus_updates';
 
   static Map<String, WidgetBuilder> get routes {
     return {
       chatList: (context) => const ChatListScreen(),
       newChat: (context) => const NewChatScreen(),
       createGroup: (context) => const CreateGroupScreen(),
+      eventsList: (context) => const EventsListScreen(),
+      campusUpdates: (context) => const CampusUpdatesScreen(),
     };
   }
 
@@ -52,7 +58,21 @@ class AppRoutes {
     switch (settings.name) {
       case initial:
         return MaterialPageRoute(
-          builder: (_) => const CreateEventScreen(),
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('OneCamp Initializing...')),
+          ),
+          settings: settings,
+        );
+
+      case eventsList:
+        return MaterialPageRoute(
+          builder: (_) => const EventsListScreen(),
+          settings: settings,
+        );
+
+      case campusUpdates:
+        return MaterialPageRoute(
+          builder: (_) => const CampusUpdatesScreen(),
           settings: settings,
         );
 

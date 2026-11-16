@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../core/services/cloudinary_upload_service.dart';
 import '../models/event_model.dart';
 import '../models/user_position.dart';
 import '../repositories/event_repository.dart';
@@ -36,10 +38,15 @@ class EventController extends ChangeNotifier {
 
   // ---------- Asynchronous Status State ----------
   bool _isLoadingLocation = false;
+  bool _isUploadingImage = false;
   bool _isSaving = false;
   String? _locationErrorMessage;
   String? _saveErrorMessage;
   UserPosition? _lastRetrievedPosition;
+
+  final CloudinaryUploadService _cloudinaryService = CloudinaryUploadService(
+    uploadPreset: 'onecamp_event_images',
+  );
 
   // ---------- Getters ----------
   String get title => _title;
@@ -50,6 +57,7 @@ class EventController extends ChangeNotifier {
   double? get latitude => _latitude;
   double? get longitude => _longitude;
   String? get imageUrl => _imageUrl;
+  bool get isUploadingImage => _isUploadingImage;
 
   String? get editingEventId => _editingEventId;
   String? get organizerId => _organizerId;
@@ -253,6 +261,34 @@ class EventController extends ChangeNotifier {
   /// Opens device location settings for enabling GPS hardware.
   Future<bool> openLocationSettings() =>
       _locationService.openLocationSettings();
+
+  // ---------- Image Upload Operations (Cloudinary) ----------
+
+  /// Pick an image from camera or gallery and upload to Cloudinary.
+  Future<void> pickAndUploadImage(ImageSource source) async {
+    _isUploadingImage = true;
+    _saveErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final xFile = await _cloudinaryService.pickImage(source);
+      if (xFile != null) {
+        final url = await _cloudinaryService.uploadImage(xFile);
+        _imageUrl = url;
+      }
+    } catch (e) {
+      _saveErrorMessage = 'Image upload error: $e';
+    } finally {
+      _isUploadingImage = false;
+      notifyListeners();
+    }
+  }
+
+  /// Remove attached event banner image.
+  void removeImage() {
+    _imageUrl = null;
+    notifyListeners();
+  }
 
   // ---------- Persistence Operations ----------
 

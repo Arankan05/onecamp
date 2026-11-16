@@ -45,13 +45,20 @@ class CloudinaryUploadService {
     'ogg',
   ];
 
+  final String _preset;
   final ImagePicker _picker;
   final http.Client _httpClient;
 
   CloudinaryUploadService({
+    String? uploadPreset,
     ImagePicker? picker,
     http.Client? httpClient,
-  })  : _picker = picker ?? ImagePicker(),
+  })  : _preset = uploadPreset ??
+            (const String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET',
+                    defaultValue: '').isNotEmpty
+                ? const String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET')
+                : 'onecamp_event_images'),
+        _picker = picker ?? ImagePicker(),
         _httpClient = httpClient ?? http.Client();
 
   /// Pick an image from Camera or Gallery.
@@ -146,7 +153,7 @@ class CloudinaryUploadService {
     final Uri uri = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/$resourceType/upload');
 
     final http.MultipartRequest request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = _uploadPreset
+      ..fields['upload_preset'] = _preset
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
 
     if (customPublicId != null && customPublicId.isNotEmpty) {
