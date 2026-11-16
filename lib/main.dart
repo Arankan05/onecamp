@@ -4,6 +4,7 @@ import 'core/theme/app_theme.dart';
 import 'routes/app_routes.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   // Initialize Firebase using the shared service
   await FirebaseService.initialize();
 

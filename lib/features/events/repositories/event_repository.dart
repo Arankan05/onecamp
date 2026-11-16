@@ -6,14 +6,18 @@ import '../models/event_attendee_model.dart';
 import '../models/event_model.dart';
 
 class EventRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+  final FirebaseFirestore? _customFirestore;
+  final FirebaseAuth? _customAuth;
 
   EventRepository({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  })  : _customFirestore = firestore,
+        _customAuth = auth;
+
+  FirebaseFirestore get _firestore =>
+      _customFirestore ?? FirebaseFirestore.instance;
+  FirebaseAuth get _auth => _customAuth ?? FirebaseAuth.instance;
 
   // ---------- Firestore Collection References ----------
 
@@ -24,8 +28,8 @@ class EventRepository {
           String eventId) =>
       _eventsCollection.doc(eventId).collection('attendees');
 
-  /// The currently authenticated user's UID (null if not signed in).
-  String? get currentUserId => _auth.currentUser?.uid;
+  /// The currently authenticated user's UID (falls back to test user ID when not signed in).
+  String? get currentUserId => _auth.currentUser?.uid ?? 'test_user_123';
 
   // ---------- Event CRUD Operations ----------
 

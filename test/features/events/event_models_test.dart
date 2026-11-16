@@ -70,6 +70,8 @@ void main() {
         category: 'Sports',
         dateTime: now,
         locationName: 'Gym',
+        latitude: 6.9271,
+        longitude: 79.8612,
         organizerId: 'org_1',
         organizerName: 'Sports Club',
         attendeeCount: 10,
@@ -86,6 +88,38 @@ void main() {
       expect(updated.id, equals('evt_1'));
       expect(updated.description, equals('Original Description'));
       expect(updated.organizerId, equals('org_1'));
+      // Coordinates are preserved when omitted
+      expect(updated.latitude, equals(6.9271));
+      expect(updated.longitude, equals(79.8612));
+      expect(updated.hasCoordinates, isTrue);
+      expect(updated.coordinatesDisplay, equals('6.9271, 79.8612'));
+    });
+
+    test('copyWith explicitly clears coordinates when clearCoordinates is true', () {
+      final now = DateTime(2026, 11, 15, 10, 0);
+      final event = EventModel(
+        id: 'evt_with_coords',
+        title: 'Outdoor Meetup',
+        description: 'Meet at the fountain',
+        category: 'Social',
+        dateTime: now,
+        locationName: 'Campus Fountain',
+        latitude: 6.9271,
+        longitude: 79.8612,
+        organizerId: 'org_1',
+        organizerName: 'Social Club',
+        createdAt: now,
+      );
+
+      expect(event.hasCoordinates, isTrue);
+
+      final cleared = event.copyWith(clearCoordinates: true);
+
+      expect(cleared.latitude, isNull);
+      expect(cleared.longitude, isNull);
+      expect(cleared.hasCoordinates, isFalse);
+      expect(cleared.coordinatesDisplay, isNull);
+      expect(cleared.locationName, equals('Campus Fountain')); // venue name remains intact!
     });
   });
 

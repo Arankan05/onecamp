@@ -88,7 +88,16 @@ class EventModel {
     };
   }
 
+  /// Whether this event has both latitude and longitude coordinates.
+  bool get hasCoordinates => latitude != null && longitude != null;
+
+  /// Formatted string of coordinates e.g. "6.9271, 79.8612" or null if absent.
+  String? get coordinatesDisplay =>
+      hasCoordinates ? '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}' : null;
+
   /// Creates a copy of this [EventModel] with specified fields replaced.
+  ///
+  /// Set [clearCoordinates] to `true` to explicitly clear latitude and longitude.
   EventModel copyWith({
     String? id,
     String? title,
@@ -98,6 +107,7 @@ class EventModel {
     String? locationName,
     double? latitude,
     double? longitude,
+    bool clearCoordinates = false,
     String? organizerId,
     String? organizerName,
     String? imageUrl,
@@ -111,8 +121,8 @@ class EventModel {
       category: category ?? this.category,
       dateTime: dateTime ?? this.dateTime,
       locationName: locationName ?? this.locationName,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      latitude: clearCoordinates ? null : (latitude ?? this.latitude),
+      longitude: clearCoordinates ? null : (longitude ?? this.longitude),
       organizerId: organizerId ?? this.organizerId,
       organizerName: organizerName ?? this.organizerName,
       imageUrl: imageUrl ?? this.imageUrl,
