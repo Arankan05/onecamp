@@ -232,6 +232,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 4),
 
+                  // Academic Subtitle (e.g. Degree · Year X · Faculty)
+                  if ([
+                    profile.degree,
+                    profile.academicYear != null
+                        ? 'Year ${profile.academicYear}'
+                        : null,
+                    profile.faculty,
+                  ].any((element) => element?.isNotEmpty == true))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        [
+                          if (profile.degree?.isNotEmpty == true)
+                            profile.degree,
+                          if (profile.academicYear != null)
+                            'Year ${profile.academicYear}',
+                          if (profile.faculty?.isNotEmpty == true)
+                            profile.faculty,
+                        ].join(' · '),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+
                   // User Email
                   Text(
                     profile.email,
