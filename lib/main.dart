@@ -19,7 +19,7 @@ class OneCampApp extends StatelessWidget {
       title: 'OneCamp',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       onGenerateRoute: AppRoutes.onGenerateRoute,
       initialRoute: AppRoutes.initial,
       debugShowCheckedModeBanner: false,

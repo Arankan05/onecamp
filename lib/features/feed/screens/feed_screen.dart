@@ -21,6 +21,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
   bool _showFollowing = false;
 
+  static const Color primaryPurple = Color(0xFF7952B8);
+  static const Color lightLavender = Color(0xFFEDE4F8);
+  static const Color backgroundLavender = Color(0xFFF7F2FC);
+  static const Color darkText = Color(0xFF302344);
+  static const Color borderLavender = Color(0xFFE9DDF8);
+
   @override
   void initState() {
     super.initState();
@@ -38,29 +44,50 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundLavender,
+
+      // Create Post button
       floatingActionButton: FloatingActionButton(
+        backgroundColor: primaryPurple,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const CreatePostScreen()),
           );
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 30),
       ),
 
+      // AppBar
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: backgroundLavender,
+        surfaceTintColor: Colors.transparent,
         title: const Text(
           'OneCamp',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: primaryPurple,
+            letterSpacing: 0.5,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people),
+            icon: const Icon(
+              Icons.people_alt_outlined,
+              color: primaryPurple,
+              size: 27,
+            ),
             tooltip: 'Students',
             onPressed: () {
               Navigator.pushNamed(context, '/students');
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
 
@@ -68,39 +95,73 @@ class _FeedScreenState extends State<FeedScreen> {
         children: [
           // All Posts / Following selector
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Center(child: Text('All Posts')),
-                    selected: !_showFollowing,
-                    onSelected: (selected) {
-                      if (selected) {
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: lightLavender,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
                         setState(() {
                           _showFollowing = false;
                         });
-                      }
-                    },
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_showFollowing
+                              ? primaryPurple
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'All Posts',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: !_showFollowing
+                                ? Colors.white
+                                : primaryPurple,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: ChoiceChip(
-                    label: const Center(child: Text('Following')),
-                    selected: _showFollowing,
-                    onSelected: (selected) {
-                      if (selected) {
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
                         setState(() {
                           _showFollowing = true;
                         });
-                      }
-                    },
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _showFollowing
+                              ? primaryPurple
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Following',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: _showFollowing
+                                ? Colors.white
+                                : primaryPurple,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -141,39 +202,53 @@ class _FeedScreenState extends State<FeedScreen> {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: primaryPurple),
+          );
         }
 
         final posts = snapshot.data ?? [];
 
         if (posts.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.dynamic_feed, size: 60, color: Colors.grey),
-                const SizedBox(height: 12),
-                Text(
-                  _showFollowing
-                      ? 'No posts from followed students'
-                      : 'No posts yet',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.dynamic_feed_outlined,
+                    size: 65,
+                    color: primaryPurple,
                   ),
-                ),
-                Text(
-                  _showFollowing
-                      ? 'Follow students to see their posts here!'
-                      : 'Be the first to share something!',
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    _showFollowing
+                        ? 'No posts from followed students'
+                        : 'No posts yet',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _showFollowing
+                        ? 'Follow students to see their posts here!'
+                        : 'Be the first to share something!',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 90),
           itemCount: posts.length,
           itemBuilder: (context, index) {
             return _buildPostCard(posts[index]);
@@ -188,7 +263,14 @@ class _FeedScreenState extends State<FeedScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
+      elevation: 2,
+      shadowColor: primaryPurple..withValues(alpha: 0.12),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: borderLavender, width: 1),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _openPostDetails(post),
@@ -200,21 +282,33 @@ class _FeedScreenState extends State<FeedScreen> {
               // Post header
               Row(
                 children: [
-                  const CircleAvatar(child: Icon(Icons.person)),
+                  const CircleAvatar(
+                    radius: 23,
+                    backgroundColor: lightLavender,
+                    child: Icon(Icons.person, color: primaryPurple, size: 26),
+                  ),
 
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
 
                   Expanded(
                     child: Text(
                       'Student • ${post.authorId}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: darkText,
+                      ),
                     ),
                   ),
 
                   // Post options
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-
+                    icon: const Icon(Icons.more_horiz, color: primaryPurple),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     onSelected: (value) async {
                       if (value == 'copy') {
                         await Clipboard.setData(
@@ -259,40 +353,36 @@ class _FeedScreenState extends State<FeedScreen> {
                         }
                       }
                     },
-
                     itemBuilder: (context) => [
-                      // Copy option for every user
                       const PopupMenuItem<String>(
                         value: 'copy',
                         child: Row(
                           children: [
-                            Icon(Icons.copy),
+                            Icon(Icons.copy, size: 19),
                             SizedBox(width: 8),
                             Text('Copy Post Text'),
                           ],
                         ),
                       ),
 
-                      // Edit option for post owner only
                       if (user?.uid == post.authorId)
                         const PopupMenuItem<String>(
                           value: 'edit',
                           child: Row(
                             children: [
-                              Icon(Icons.edit),
+                              Icon(Icons.edit, size: 19),
                               SizedBox(width: 8),
                               Text('Edit Post'),
                             ],
                           ),
                         ),
 
-                      // Delete option for post owner only
                       if (user?.uid == post.authorId)
                         const PopupMenuItem<String>(
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete, color: Colors.red),
+                              Icon(Icons.delete, color: Colors.red, size: 19),
                               SizedBox(width: 8),
                               Text('Delete Post'),
                             ],
@@ -303,26 +393,44 @@ class _FeedScreenState extends State<FeedScreen> {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               // Post content
-              if (post.content.isNotEmpty) Text(post.content),
+              if (post.content.isNotEmpty)
+                Text(
+                  post.content,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: darkText,
+                  ),
+                ),
 
               // Post image
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-
-                Image.network(
-                  post.imageUrl!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Text('Unable to load image');
-                  },
+                const SizedBox(height: 14),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.network(
+                    post.imageUrl!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        color: backgroundLavender,
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Unable to load image',
+                          style: TextStyle(color: primaryPurple),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Post date
               Text(
@@ -330,7 +438,11 @@ class _FeedScreenState extends State<FeedScreen> {
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
 
-              const Divider(),
+              const SizedBox(height: 12),
+
+              const Divider(color: borderLavender, height: 1),
+
+              const SizedBox(height: 8),
 
               // Like count and Like button
               StreamBuilder<int>(
@@ -353,6 +465,11 @@ class _FeedScreenState extends State<FeedScreen> {
                         children: [
                           // Like button
                           TextButton.icon(
+                            style: TextButton.styleFrom(
+                              foregroundColor: isLiked
+                                  ? Colors.pink
+                                  : primaryPurple,
+                            ),
                             onPressed: user == null
                                 ? null
                                 : () async {
@@ -376,13 +493,15 @@ class _FeedScreenState extends State<FeedScreen> {
                                   },
                             icon: Icon(
                               isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: isLiked ? Colors.red : null,
                             ),
                             label: Text('Like ($likeCount)'),
                           ),
 
                           // Comment button
                           TextButton.icon(
+                            style: TextButton.styleFrom(
+                              foregroundColor: primaryPurple,
+                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -392,7 +511,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.comment_outlined),
+                            icon: const Icon(Icons.chat_bubble_outline),
                             label: const Text('Comment'),
                           ),
                         ],
@@ -411,14 +530,10 @@ class _FeedScreenState extends State<FeedScreen> {
                   children: [
                     Text(
                       'Tap post to view details',
-                      style: TextStyle(color: Colors.deepPurple, fontSize: 12),
+                      style: TextStyle(color: primaryPurple, fontSize: 12),
                     ),
-                    SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward,
-                      size: 14,
-                      color: Colors.deepPurple,
-                    ),
+                    SizedBox(width: 5),
+                    Icon(Icons.arrow_forward, size: 14, color: primaryPurple),
                   ],
                 ),
               ),
