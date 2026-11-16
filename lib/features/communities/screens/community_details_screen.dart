@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../controllers/community_controller.dart';
 import '../models/community.dart';
+import '../widgets/announcements_tab.dart';
+import '../widgets/members_tab.dart';
+import '../widgets/posts_tab.dart';
 
 class CommunityDetailsScreen extends StatefulWidget {
   const CommunityDetailsScreen({super.key, required this.communityId});
@@ -82,12 +85,23 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
             body: Column(
               children: [
                 _buildHeader(community),
-                const Expanded(
+                Expanded(
                   child: TabBarView(
                     children: [
-                      Center(child: Text('Posts coming next')),
-                      Center(child: Text('Announcements coming next')),
-                      Center(child: Text('Members coming next')),
+                      PostsTab(
+                        controller: _controller,
+                        communityId: widget.communityId,
+                      ),
+                      AnnouncementsTab(
+                        controller: _controller,
+                        communityId: widget.communityId,
+                        isCreator:
+                            community.createdBy == _controller.currentUserId,
+                      ),
+                      MembersTab(
+                        controller: _controller,
+                        communityId: widget.communityId,
+                      ),
                     ],
                   ),
                 ),
@@ -122,7 +136,7 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
                   return isMember
                       ? OutlinedButton(
                           onPressed: () => _toggleMembership(true),
-                          child: const Text('Join or Leave placeholder'),
+                          child: const Text('Leave'),
                         )
                       : ElevatedButton(
                           onPressed: () => _toggleMembership(false),
