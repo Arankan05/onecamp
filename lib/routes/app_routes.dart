@@ -1,14 +1,21 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
+import '../features/campus/screens/campus_updates_screen.dart';
 import '../features/chat/screens/chat_details_screen.dart';
 import '../features/chat/screens/chat_list_screen.dart';
 import '../features/chat/screens/chat_room_screen.dart';
 import '../features/chat/screens/create_group_screen.dart';
 import '../features/chat/screens/dev_chat_entry_screen.dart';
 import '../features/chat/screens/new_chat_screen.dart';
+import '../features/events/models/event_model.dart';
+import '../features/events/screens/create_event_screen.dart';
+import '../features/events/screens/event_details_screen.dart';
+import '../features/events/screens/events_list_screen.dart';
 import '../features/communities/screens/community_details_screen.dart';
 import '../features/communities/screens/community_list_screen.dart';
 import '../features/communities/screens/create_community_screen.dart';
@@ -39,11 +46,19 @@ class AppRoutes {
   static const String createGroup = '/create_group';
   static const String chatDetails = '/chat_details';
 
+  // Events & Campus Feature Routes
+  static const String eventsList = '/events';
+  static const String createEvent = '/events/create';
+  static const String eventDetails = '/events/details';
+  static const String campusUpdates = '/campus_updates';
+
   static Map<String, WidgetBuilder> get routes {
     return {
       chatList: (context) => const ChatListScreen(),
       newChat: (context) => const NewChatScreen(),
       createGroup: (context) => const CreateGroupScreen(),
+      eventsList: (context) => const EventsListScreen(),
+      campusUpdates: (context) => const CampusUpdatesScreen(),
       devChatEntry: (context) => const DevChatEntryScreen(),
     };
   }
@@ -59,6 +74,18 @@ class AppRoutes {
       case devChatEntry:
         return MaterialPageRoute(
           builder: (_) => const DevChatEntryScreen(),
+          settings: settings,
+        );
+
+      case eventsList:
+        return MaterialPageRoute(
+          builder: (_) => const EventsListScreen(),
+          settings: settings,
+        );
+
+      case campusUpdates:
+        return MaterialPageRoute(
+          builder: (_) => const CampusUpdatesScreen(),
           settings: settings,
         );
 
@@ -171,6 +198,36 @@ class AppRoutes {
                 const [],
             otherUserId: args['otherUserId'] as String?,
           ),
+          settings: settings,
+        );
+
+      case createEvent:
+        final args = settings.arguments;
+        final eventToEdit = args is EventModel ? args : null;
+        return MaterialPageRoute<String?>(
+          builder: (_) => CreateEventScreen(eventToEdit: eventToEdit),
+          settings: settings,
+        );
+
+      case eventDetails:
+        final args = settings.arguments;
+        if (args is! EventModel) {
+          return MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Invalid Event')),
+              body: Center(
+                child: Text(
+                  args == null
+                      ? 'Error: Missing event details argument.'
+                      : 'Error: Invalid event details argument type (${args.runtimeType}).',
+                ),
+              ),
+            ),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => EventDetailsScreen(event: args),
           settings: settings,
         );
 

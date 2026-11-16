@@ -12,7 +12,6 @@ import 'routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   // Initialize Firebase for the actual application.
   await FirebaseService.initialize();
 

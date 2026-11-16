@@ -6,7 +6,7 @@ class AppTheme {
   static const Color primaryLightColor = Color(0xFF8B5CF6);
   static const Color primaryBackground = Color(0xFFF4F0FD);
   static const Color secondaryColor = Color(0xFFEDE9FE);
-  
+
   static const Color successBgColor = Color(0xFFDCFCE7);
   static const Color successTextColor = Color(0xFF15803D);
 

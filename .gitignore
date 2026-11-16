@@ -3,6 +3,7 @@
 *.log
 *.pyc
 *.swp
+*.pdf
 .DS_Store
 .atom/
 .build/
@@ -45,6 +46,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+android/.kotlin/
+android/build_log*.txt
 
 # Widget Preview related
 .widget_preview/
