@@ -46,8 +46,19 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Stream<User?>? authStream;
+    try {
+      authStream = FirebaseAuth.instance.authStateChanges();
+    } catch (_) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: authStream,
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -62,38 +73,42 @@ class AuthGate extends StatelessWidget {
           return const LoginScreen();
         }
 
-        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection(AppConstants.usersCollection)
-              .doc(user.uid)
-              .snapshots(),
-          builder: (context, profileSnapshot) {
-            if (profileSnapshot.connectionState ==
-                ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
+        try {
+          return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection(AppConstants.usersCollection)
+                .doc(user.uid)
+                .snapshots(),
+            builder: (context, profileSnapshot) {
+              if (profileSnapshot.connectionState ==
+                  ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
 
-            if (profileSnapshot.hasError ||
-                !profileSnapshot.hasData ||
-                !profileSnapshot.data!.exists) {
+              if (profileSnapshot.hasError ||
+                  !profileSnapshot.hasData ||
+                  !profileSnapshot.data!.exists) {
+                return const OnboardingScreen();
+              }
+
+              final data = profileSnapshot.data!.data();
+              final onboardingCompleted =
+                  data?['onboardingCompleted'] as bool? ?? false;
+
+              if (onboardingCompleted) {
+                return const MainNavigationScreen();
+              }
+
               return const OnboardingScreen();
-            }
-
-            final data = profileSnapshot.data!.data();
-            final onboardingCompleted =
-                data?['onboardingCompleted'] as bool? ?? false;
-
-            if (onboardingCompleted) {
-              return const MainNavigationScreen();
-            }
-
-            return const OnboardingScreen();
-          },
-        );
+            },
+          );
+        } catch (_) {
+          return const OnboardingScreen();
+        }
       },
     );
   }

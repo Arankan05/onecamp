@@ -13,13 +13,17 @@ import '../features/chat/screens/chat_room_screen.dart';
 import '../features/chat/screens/create_group_screen.dart';
 import '../features/chat/screens/dev_chat_entry_screen.dart';
 import '../features/chat/screens/new_chat_screen.dart';
+import '../features/communities/screens/community_details_screen.dart';
+import '../features/communities/screens/community_list_screen.dart';
+import '../features/communities/screens/create_community_screen.dart';
 import '../features/events/models/event_model.dart';
 import '../features/events/screens/create_event_screen.dart';
 import '../features/events/screens/event_details_screen.dart';
 import '../features/events/screens/events_list_screen.dart';
-import '../features/communities/screens/community_details_screen.dart';
-import '../features/communities/screens/community_list_screen.dart';
-import '../features/communities/screens/create_community_screen.dart';
+import '../features/marketplace/models/marketplace_item.dart';
+import '../features/marketplace/screens/create_edit_item_screen.dart';
+import '../features/marketplace/screens/item_detail_screen.dart';
+import '../features/marketplace/screens/marketplace_browse_screen.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -41,7 +45,6 @@ class AppRoutes {
   static const String createCommunity = '/create-community';
 
   // Chat module routes
-  static const String devChatEntry = '/dev_chat_entry';
   static const String chatList = '/chat_list';
   static const String chatRoom = '/chat_room';
   static const String newChat = '/new_chat';
@@ -55,6 +58,12 @@ class AppRoutes {
   static const String eventDetails = '/events/details';
   static const String campusUpdates = '/campus_updates';
 
+  // Marketplace Feature Routes
+  static const String marketplace = '/marketplace';
+  static const String marketplaceDetail = '/marketplace/detail';
+  static const String marketplaceCreate = '/marketplace/create';
+  static const String marketplaceEdit = '/marketplace/edit';
+
   static Map<String, WidgetBuilder> get routes {
     return {
       mainNavigation: (context) => const MainNavigationScreen(),
@@ -63,6 +72,7 @@ class AppRoutes {
       createGroup: (context) => const CreateGroupScreen(),
       eventsList: (context) => const EventsListScreen(),
       campusUpdates: (context) => const CampusUpdatesScreen(),
+      marketplace: (context) => const MarketplaceBrowseScreen(),
       devChatEntry: (context) => const DevChatEntryScreen(),
     };
   }
@@ -70,15 +80,14 @@ class AppRoutes {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case initial:
-      case mainNavigation:
         return MaterialPageRoute(
-          builder: (_) => const MainNavigationScreen(),
+          builder: (_) => const AuthGate(),
           settings: settings,
         );
 
-      case devChatEntry:
+      case mainNavigation:
         return MaterialPageRoute(
-          builder: (_) => const AuthGate(),
+          builder: (_) => const MainNavigationScreen(),
           settings: settings,
         );
 
@@ -239,6 +248,50 @@ class AppRoutes {
         }
         return MaterialPageRoute(
           builder: (_) => EventDetailsScreen(event: args),
+          settings: settings,
+        );
+
+      case marketplace:
+        return MaterialPageRoute(
+          builder: (_) => const MarketplaceBrowseScreen(),
+          settings: settings,
+        );
+
+      case marketplaceDetail:
+        final item = settings.arguments as MarketplaceItem?;
+        if (item == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('Error: No item specified.')),
+            ),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => ItemDetailScreen(item: item),
+          settings: settings,
+        );
+
+      case marketplaceCreate:
+        return MaterialPageRoute(
+          builder: (_) => const CreateEditItemScreen(isEditing: false),
+          settings: settings,
+        );
+
+      case marketplaceEdit:
+        final item = settings.arguments as MarketplaceItem?;
+        if (item == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: No item specified for editing.'),
+              ),
+            ),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => CreateEditItemScreen(isEditing: true, item: item),
           settings: settings,
         );
 
