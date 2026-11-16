@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -171,9 +169,8 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
       // 1. Upload ONLY new local image files to Cloudinary
       final List<String> newlyUploadedUrls = [];
       if (_newImageFiles.isNotEmpty) {
-        final filesToUpload = _newImageFiles.map((x) => File(x.path)).toList();
-        final uploaded = await _cloudinaryService.uploadMultipleImages(
-          filesToUpload,
+        final uploaded = await _cloudinaryService.uploadMultipleXFiles(
+          _newImageFiles,
         );
         newlyUploadedUrls.addAll(uploaded);
       }

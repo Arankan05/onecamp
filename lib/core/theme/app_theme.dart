@@ -11,10 +11,7 @@ class AppTheme {
         seedColor: primaryColor,
         secondary: secondaryColor,
       ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-      ),
+      appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
       // Add more theme configurations as needed
     );
   }
@@ -27,10 +24,7 @@ class AppTheme {
         secondary: secondaryColor,
         brightness: Brightness.dark,
       ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-      ),
+      appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
     );
   }
 }

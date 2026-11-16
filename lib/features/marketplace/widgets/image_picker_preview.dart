@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -123,7 +124,9 @@ class ImagePickerPreview extends StatelessWidget {
                 final xFile = entry.value;
                 return _buildImageTile(
                   context,
-                  imageWidget: Image.file(File(xFile.path), fit: BoxFit.cover),
+                  imageWidget: kIsWeb
+                      ? Image.network(xFile.path, fit: BoxFit.cover)
+                      : Image.file(File(xFile.path), fit: BoxFit.cover),
                   onDelete: () => onRemoveNewFile(index),
                   badgeLabel: 'New',
                 );

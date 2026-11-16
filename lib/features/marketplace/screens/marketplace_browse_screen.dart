@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -22,9 +24,11 @@ class MarketplaceBrowseScreen extends StatefulWidget {
 class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
   late final MarketplaceRepository _repository;
   final TextEditingController _searchController = TextEditingController();
+  StreamSubscription<User?>? _authSubscription;
 
   String _selectedCategory = 'All';
   String _searchQuery = '';
+  bool _isSigningIn = false;
 
   @override
   void initState() {
@@ -35,15 +39,38 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
         _searchQuery = _searchController.text.trim().toLowerCase();
       });
     });
+
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   User? get _currentUser => FirebaseAuth.instance.currentUser;
+
+  Future<void> _signInAsGuest() async {
+    setState(() => _isSigningIn = true);
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to sign in: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSigningIn = false);
+    }
+  }
 
   void _onCategorySelected(String category) {
     setState(() {
@@ -236,6 +263,84 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
+                    final errStr = snapshot.error.toString();
+                    final isPermissionDenied =
+                        errStr.contains('permission-denied') ||
+                        errStr.contains('Missing or insufficient permissions');
+
+                    if (isPermissionDenied || _currentUser == null) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(28),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: const BoxDecoration(
+                                  color: MarketplaceTheme.primaryLight,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.lock_outline,
+                                  size: 40,
+                                  color: MarketplaceTheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Sign in to view campus listings',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: MarketplaceTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'OneCamp requires an authenticated session to browse student listings.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: MarketplaceTheme.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                onPressed: _isSigningIn ? null : _signInAsGuest,
+                                icon: _isSigningIn
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(Icons.login, size: 18),
+                                label: Text(
+                                  _isSigningIn
+                                      ? 'Connecting...'
+                                      : 'Browse as Campus Guest',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: MarketplaceTheme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
