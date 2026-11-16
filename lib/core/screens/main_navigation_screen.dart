@@ -4,6 +4,7 @@ import '../../features/chat/screens/chat_list_screen.dart';
 import '../../features/communities/screens/community_list_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/feed/screens/feed_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -27,7 +28,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _onTabSelected(int index) {
-    if (index >= 0 && index < 4) {
+    if (index >= 0 && index < 5) {
       setState(() {
         _currentIndex = index;
       });
@@ -45,6 +46,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             HomeScreen(
               onNavigateToTab: _onTabSelected,
             ),
+            const FeedScreen(),
             const CommunityListScreen(),
             const ChatListScreen(),
             const ProfileScreen(),
@@ -59,6 +61,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded),
             label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.dynamic_feed_outlined),
+            selectedIcon: Icon(Icons.dynamic_feed_rounded),
+            label: 'Feed',
           ),
           NavigationDestination(
             icon: Icon(Icons.groups_outlined),

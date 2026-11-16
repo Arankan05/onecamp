@@ -273,7 +273,7 @@ class HomeScreen extends StatelessWidget {
             color: Colors.blue.shade700,
             onTap: () {
               if (onNavigateToTab != null) {
-                onNavigateToTab!(1); // Index 1: Communities Tab
+                onNavigateToTab!(2); // Index 2: Communities Tab
               }
             },
           ),
@@ -288,7 +288,7 @@ class HomeScreen extends StatelessWidget {
             color: Colors.teal.shade700,
             onTap: () {
               if (onNavigateToTab != null) {
-                onNavigateToTab!(2); // Index 2: Chat Tab
+                onNavigateToTab!(3); // Index 3: Chat Tab
               }
             },
           ),
@@ -399,15 +399,17 @@ class HomeScreen extends StatelessWidget {
   Widget _buildModuleGrid(BuildContext context) {
     final modules = [
       _ModuleItem('Communities', 'Student clubs & groups', Icons.groups_rounded, Colors.blue, true, () {
-        if (onNavigateToTab != null) onNavigateToTab!(1);
-      }),
-      _ModuleItem('Real-Time Chat', 'Messages & WebRTC calls', Icons.chat_bubble_rounded, Colors.green, true, () {
         if (onNavigateToTab != null) onNavigateToTab!(2);
       }),
-      _ModuleItem('Student Profile', 'Academic bio & skills', Icons.person_rounded, Colors.purple, true, () {
+      _ModuleItem('Real-Time Chat', 'Messages & WebRTC calls', Icons.chat_bubble_rounded, Colors.green, true, () {
         if (onNavigateToTab != null) onNavigateToTab!(3);
       }),
-      _ModuleItem('Campus Feed', 'Social posts & news', Icons.dynamic_feed_rounded, Colors.orange, false, null),
+      _ModuleItem('Student Profile', 'Academic bio & skills', Icons.person_rounded, Colors.purple, true, () {
+        if (onNavigateToTab != null) onNavigateToTab!(4);
+      }),
+      _ModuleItem('Campus Feed', 'Social posts & news', Icons.dynamic_feed_rounded, Colors.orange, true, () {
+        if (onNavigateToTab != null) onNavigateToTab!(1);
+      }),
       _ModuleItem('Marketplace', 'Buy & sell textbooks', Icons.storefront_rounded, Colors.teal, false, null),
       _ModuleItem('Events & Schedule', 'University calendar', Icons.event_rounded, Colors.red, false, null),
     ];

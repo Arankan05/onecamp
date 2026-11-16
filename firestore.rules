@@ -49,6 +49,17 @@ service cloud.firestore {
           && request.resource.data.uid == blockedId;
         allow delete: if isOwner(userId);
       }
+
+      // Following/Followers
+      match /following/{followingId} {
+        allow read: if isSignedIn();
+        allow create, delete: if isOwner(userId);
+      }
+
+      match /followers/{followerId} {
+        allow read: if isSignedIn();
+        allow create, delete: if isSignedIn() && request.auth.uid == followerId;
+      }
     }
 
     // 2. Posts
