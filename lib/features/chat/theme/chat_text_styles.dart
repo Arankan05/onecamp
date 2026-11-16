@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'chat_colors.dart';
 
 class ChatTextStyles {
+  static const List<String> emojiFallbackFonts = [
+    'Noto Color Emoji',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'sans-serif',
+  ];
+
   static const TextStyle headerTitle = TextStyle(
     fontSize: 20.0,
     fontWeight: FontWeight.bold,
@@ -42,12 +49,14 @@ class ChatTextStyles {
     fontSize: 15.0,
     fontWeight: FontWeight.w400,
     color: ChatColors.textOnPrimary,
+    fontFamilyFallback: emojiFallbackFonts,
   );
 
   static const TextStyle receiverMessage = TextStyle(
     fontSize: 15.0,
     fontWeight: FontWeight.w400,
     color: ChatColors.textPrimary,
+    fontFamilyFallback: emojiFallbackFonts,
   );
 
   static const TextStyle messageTimeSender = TextStyle(

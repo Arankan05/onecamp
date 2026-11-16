@@ -144,6 +144,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   children: [
                     TextField(
                       controller: _groupNameController,
+                      style: const TextStyle(color: Color(0xFF29213F), fontSize: 14.0, fontWeight: FontWeight.w500),
+                      cursorColor: const Color(0xFF7138D8),
                       decoration: ChatDecorations.inputDecoration('Enter group name...').copyWith(
                         prefixIcon: const Icon(Icons.group_outlined, color: ChatColors.primaryPurple),
                       ),
@@ -151,6 +153,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     const SizedBox(height: ChatDimensions.paddingM),
                     TextField(
                       controller: _searchController,
+                      style: const TextStyle(color: Color(0xFF29213F), fontSize: 14.0, fontWeight: FontWeight.w500),
+                      cursorColor: const Color(0xFF7138D8),
                       decoration: ChatDecorations.inputDecoration('Search members...').copyWith(
                         prefixIcon: const Icon(Icons.search, color: ChatColors.textLight),
                         suffixIcon: _searchQuery.isNotEmpty

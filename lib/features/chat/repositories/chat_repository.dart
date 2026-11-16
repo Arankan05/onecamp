@@ -16,6 +16,16 @@ class ChatRepository {
 
   String? get currentUserId => _auth.currentUser?.uid;
 
+  /// Generate a stable client-side document ID for idempotency and retry handling.
+  String generateMessageId(String chatId) {
+    return _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .collection('messages')
+        .doc()
+        .id;
+  }
+
   /// Stream all chats for a specific user ID.
   /// Enforces security rule requirement: participantIds arrayContains authenticated UID.
   Stream<List<ChatModel>> getChatsStream(String userId) {
@@ -143,11 +153,12 @@ class ChatRepository {
     return docRef.id;
   }
 
-  /// Sends a text message in the given chat room and updates parent chat metadata.
+  /// Sends a text message using a safe, idempotent strategy that preserves existing server fields on retry.
   Future<void> sendMessage({
     required String chatId,
     required String senderId,
     required String text,
+    String? clientMessageId,
     String? replyToMessageId,
     String? replyToSenderName,
     String? replyToText,
@@ -162,6 +173,22 @@ class ChatRepository {
       return;
     }
 
+    // Enforce blocking check for direct chats before sending
+    final chatDoc = await _firestore.collection(AppConstants.chatsCollection).doc(chatId).get();
+    if (chatDoc.exists && chatDoc.data()?['type'] == 'direct') {
+      final participantIds = (chatDoc.data()?['participantIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      final otherUid = participantIds.firstWhere((id) => id != senderId, orElse: () => '');
+      if (otherUid.isNotEmpty) {
+        final blocked = await isDirectChatBlocked(otherUid);
+        if (blocked) {
+          throw SecurityException('Cannot send message in a blocked conversation.');
+        }
+      }
+    }
+
     final Map<String, dynamic> messageData = {
       'senderId': senderId,
       'text': trimmedText,
@@ -170,6 +197,7 @@ class ChatRepository {
       'readBy': [senderId],
       'isDeleted': false,
       'hiddenFor': [],
+      'status': 'sent',
     };
     if (replyToMessageId != null) {
       messageData['replyToMessageId'] = replyToMessageId;
@@ -181,28 +209,40 @@ class ChatRepository {
       messageData['replyToText'] = replyToText;
     }
 
-    // 1. Add message document to subcollection
-    await _firestore
+    final targetId = clientMessageId ?? generateMessageId(chatId);
+    final docRef = _firestore
         .collection(AppConstants.chatsCollection)
         .doc(chatId)
         .collection('messages')
-        .add(messageData);
+        .doc(targetId);
 
-    // 2. Update parent chat lastMessage & lastMessageAt
+    final docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set(messageData);
+    } else {
+      await docRef.update({
+        'status': 'sent',
+        'text': trimmedText,
+      });
+    }
+
+    // 2. Update parent chat lastMessage, lastMessageAt & reset hiddenFor
     await _firestore
         .collection(AppConstants.chatsCollection)
         .doc(chatId)
         .update({
       'lastMessage': trimmedText,
       'lastMessageAt': FieldValue.serverTimestamp(),
+      'hiddenFor': [],
     });
   }
 
-  /// Sends an image message containing an externally hosted image URL.
+  /// Sends an image message using a safe, idempotent strategy that preserves existing server fields on retry.
   Future<void> sendImageMessage({
     required String chatId,
     required String senderId,
     required String imageUrl,
+    String? clientMessageId,
     String? caption,
   }) async {
     final activeUid = currentUserId;
@@ -214,33 +254,281 @@ class ChatRepository {
       throw ArgumentError('Image URL cannot be empty.');
     }
 
+    final chatDoc = await _firestore.collection(AppConstants.chatsCollection).doc(chatId).get();
+    if (chatDoc.exists && chatDoc.data()?['type'] == 'direct') {
+      final participantIds = (chatDoc.data()?['participantIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      final otherUid = participantIds.firstWhere((id) => id != senderId, orElse: () => '');
+      if (otherUid.isNotEmpty) {
+        final blocked = await isDirectChatBlocked(otherUid);
+        if (blocked) {
+          throw SecurityException('Cannot send image in a blocked conversation.');
+        }
+      }
+    }
+
     final displayText = caption != null && caption.trim().isNotEmpty
         ? '📷 ${caption.trim()}'
         : '📷 Image';
 
-    // 1. Add message to subcollection
-    await _firestore
+    final targetId = clientMessageId ?? generateMessageId(chatId);
+    final docRef = _firestore
         .collection(AppConstants.chatsCollection)
         .doc(chatId)
         .collection('messages')
-        .add({
-      'senderId': senderId,
-      'text': caption?.trim() ?? '',
-      'imageUrl': imageUrl.trim(),
-      'messageType': 'image',
-      'sentAt': FieldValue.serverTimestamp(),
-      'readBy': [senderId],
-      'isDeleted': false,
-      'hiddenFor': [],
-    });
+        .doc(targetId);
 
-    // 2. Update parent chat lastMessage & lastMessageAt
+    final docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set({
+        'senderId': senderId,
+        'text': caption?.trim() ?? '',
+        'imageUrl': imageUrl.trim(),
+        'messageType': 'image',
+        'sentAt': FieldValue.serverTimestamp(),
+        'readBy': [senderId],
+        'isDeleted': false,
+        'hiddenFor': [],
+        'status': 'sent',
+      });
+    } else {
+      await docRef.update({
+        'status': 'sent',
+        'imageUrl': imageUrl.trim(),
+        if (caption != null) 'text': caption.trim(),
+      });
+    }
+
     await _firestore
         .collection(AppConstants.chatsCollection)
         .doc(chatId)
         .update({
       'lastMessage': displayText,
       'lastMessageAt': FieldValue.serverTimestamp(),
+      'hiddenFor': [],
+    });
+  }
+
+  /// Sends a document message containing a download URL and document metadata.
+  Future<void> sendDocumentMessage({
+    required String chatId,
+    required String senderId,
+    required String mediaUrl,
+    required String fileName,
+    required int fileSize,
+    required String fileExtension,
+    String? clientMessageId,
+  }) async {
+    final activeUid = currentUserId;
+    if (activeUid == null || activeUid != senderId) {
+      throw SecurityException('Cannot send message as a different user.');
+    }
+
+    final targetId = clientMessageId ?? generateMessageId(chatId);
+    final docRef = _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .collection('messages')
+        .doc(targetId);
+
+    final messageData = {
+      'senderId': senderId,
+      'text': fileName,
+      'mediaUrl': mediaUrl,
+      'fileName': fileName,
+      'fileSize': fileSize,
+      'fileExtension': fileExtension,
+      'messageType': 'document',
+      'sentAt': FieldValue.serverTimestamp(),
+      'readBy': [senderId],
+      'isDeleted': false,
+      'hiddenFor': [],
+      'status': 'sent',
+    };
+
+    final docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set(messageData);
+    } else {
+      await docRef.update({
+        'status': 'sent',
+        'mediaUrl': mediaUrl,
+      });
+    }
+
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .update({
+      'lastMessage': '📄 $fileName',
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'hiddenFor': [],
+    });
+  }
+
+  /// Sends an audio file message (MP3, WAV, M4A).
+  Future<void> sendAudioMessage({
+    required String chatId,
+    required String senderId,
+    required String mediaUrl,
+    required String fileName,
+    required int fileSize,
+    required int durationSeconds,
+    String? clientMessageId,
+  }) async {
+    final activeUid = currentUserId;
+    if (activeUid == null || activeUid != senderId) {
+      throw SecurityException('Cannot send message as a different user.');
+    }
+
+    final targetId = clientMessageId ?? generateMessageId(chatId);
+    final docRef = _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .collection('messages')
+        .doc(targetId);
+
+    final messageData = {
+      'senderId': senderId,
+      'text': fileName,
+      'mediaUrl': mediaUrl,
+      'fileName': fileName,
+      'fileSize': fileSize,
+      'durationSeconds': durationSeconds,
+      'messageType': 'audio',
+      'sentAt': FieldValue.serverTimestamp(),
+      'readBy': [senderId],
+      'isDeleted': false,
+      'hiddenFor': [],
+      'status': 'sent',
+    };
+
+    final docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set(messageData);
+    } else {
+      await docRef.update({
+        'status': 'sent',
+        'mediaUrl': mediaUrl,
+      });
+    }
+
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .update({
+      'lastMessage': '🎵 Audio file',
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'hiddenFor': [],
+    });
+  }
+
+  /// Sends a voice recording message.
+  Future<void> sendVoiceMessage({
+    required String chatId,
+    required String senderId,
+    required String mediaUrl,
+    required int durationSeconds,
+    String? clientMessageId,
+  }) async {
+    final activeUid = currentUserId;
+    if (activeUid == null || activeUid != senderId) {
+      throw SecurityException('Cannot send message as a different user.');
+    }
+
+    final targetId = clientMessageId ?? generateMessageId(chatId);
+    final docRef = _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .collection('messages')
+        .doc(targetId);
+
+    final messageData = {
+      'senderId': senderId,
+      'text': 'Voice Message',
+      'mediaUrl': mediaUrl,
+      'durationSeconds': durationSeconds,
+      'messageType': 'voice',
+      'sentAt': FieldValue.serverTimestamp(),
+      'readBy': [senderId],
+      'isDeleted': false,
+      'hiddenFor': [],
+      'status': 'sent',
+    };
+
+    final docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      await docRef.set(messageData);
+    } else {
+      await docRef.update({
+        'status': 'sent',
+        'mediaUrl': mediaUrl,
+      });
+    }
+
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId)
+        .update({
+      'lastMessage': '🎤 Voice message',
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'hiddenFor': [],
+    });
+  }
+
+  /// Forward a message to a destination chat room.
+  Future<void> forwardMessage({
+    required String targetChatId,
+    required MessageModel originalMessage,
+    String? senderName,
+  }) async {
+    final activeUid = currentUserId;
+    if (activeUid == null) {
+      throw SecurityException('Must be signed in to forward messages.');
+    }
+
+    final newMsgId = generateMessageId(targetChatId);
+    final Map<String, dynamic> messageData = {
+      'senderId': activeUid,
+      'text': originalMessage.text,
+      'messageType': originalMessage.messageType,
+      'isForwarded': true,
+      'sentAt': FieldValue.serverTimestamp(),
+      'readBy': [activeUid],
+      'isDeleted': false,
+      'hiddenFor': [],
+      'status': 'sent',
+    };
+    if (originalMessage.imageUrl != null) messageData['imageUrl'] = originalMessage.imageUrl;
+    if (originalMessage.mediaUrl != null) messageData['mediaUrl'] = originalMessage.mediaUrl;
+    if (originalMessage.fileName != null) messageData['fileName'] = originalMessage.fileName;
+    if (originalMessage.fileSize != null) messageData['fileSize'] = originalMessage.fileSize;
+    if (originalMessage.fileExtension != null) messageData['fileExtension'] = originalMessage.fileExtension;
+    if (originalMessage.durationSeconds != null) messageData['durationSeconds'] = originalMessage.durationSeconds;
+    if (senderName != null) messageData['forwardedFrom'] = senderName;
+
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(targetChatId)
+        .collection('messages')
+        .doc(newMsgId)
+        .set(messageData);
+
+    String lastMsgText = originalMessage.text;
+    if (originalMessage.isImage) lastMsgText = '📷 Photo';
+    if (originalMessage.isDocument) lastMsgText = '📄 ${originalMessage.fileName ?? "Document"}';
+    if (originalMessage.isAudio) lastMsgText = '🎵 Audio file';
+    if (originalMessage.isVoice) lastMsgText = '🎤 Voice message';
+
+    await _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(targetChatId)
+        .update({
+      'lastMessage': lastMsgText,
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'hiddenFor': [],
     });
   }
 
@@ -287,6 +575,7 @@ class ChatRepository {
       'text': 'This message was deleted',
       'isDeleted': true,
       'imageUrl': null,
+      'mediaUrl': null,
     });
   }
 

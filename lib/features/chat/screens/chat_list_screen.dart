@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/services/presence_service.dart';
 import '../models/chat_model.dart';
 import '../repositories/chat_repository.dart';
 import '../theme/chat_colors.dart';
@@ -69,13 +70,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
           color: isActive ? ChatColors.pillActive : ChatColors.pillInactive,
           borderRadius: BorderRadius.circular(20.0),
           boxShadow: [
-          if (isActive)
-            const BoxShadow(
-              color: Color(0x4D7B38E0),
-              blurRadius: 6.0,
-              offset: Offset(0, 2),
-            ),
-        ],
+            if (isActive)
+              const BoxShadow(
+                color: Color(0x4D7B38E0),
+                blurRadius: 6.0,
+                offset: Offset(0, 2),
+              ),
+          ],
         ),
         child: Text(
           label,
@@ -122,7 +123,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Header Bar matching Reference Screenshot
+            // Top Header Bar
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: ChatDimensions.paddingL,
@@ -145,12 +146,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Messages', style: ChatTextStyles.headerTitle),
-                        StreamBuilder<List<Map<String, dynamic>>>(
-                          stream: _chatRepository.getUsersStream(),
+                        StreamBuilder<Set<String>>(
+                          stream: PresenceService().getOnlineUserUidsStream(),
                           builder: (context, snapshot) {
-                            final count = snapshot.data?.length ?? 0;
+                            final onlineUids = snapshot.data ?? {};
+                            final count = onlineUids.where((id) => id != currentUid).length;
                             return Text(
-                              '$count campus friends online',
+                              '$count ${count == 1 ? 'campus friend' : 'campus friends'} online',
                               style: ChatTextStyles.appBarSubtitle,
                             );
                           },
@@ -229,10 +231,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      StreamBuilder<List<Map<String, dynamic>>>(
-                        stream: _chatRepository.getUsersStream(),
+                      StreamBuilder<Set<String>>(
+                        stream: PresenceService().getOnlineUserUidsStream(),
                         builder: (context, snapshot) {
-                          final onlineCount = snapshot.data?.length ?? 0;
+                          final onlineUids = snapshot.data ?? {};
+                          final onlineCount = onlineUids.where((id) => id != currentUid).length;
                           return Text(
                             '$onlineCount online',
                             style: const TextStyle(
@@ -252,70 +255,82 @@ class _ChatListScreenState extends State<ChatListScreen> {
             // Horizontal Online Active Users List
             SizedBox(
               height: 80,
-              child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _chatRepository.getUsersStream(),
-                builder: (context, snapshot) {
-                  final activeUsers = snapshot.data ?? [];
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: ChatDimensions.paddingL),
-                    itemCount: activeUsers.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        // Radar Button
-                        return Container(
-                          margin: const EdgeInsets.only(right: 14.0),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: const BoxDecoration(
-                                  color: ChatColors.primaryPurple,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.add, color: Colors.white, size: 24),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Radar',
-                                style: TextStyle(fontSize: 11, color: ChatColors.textSecondary),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+              child: StreamBuilder<Set<String>>(
+                stream: PresenceService().getOnlineUserUidsStream(),
+                builder: (context, onlineSnapshot) {
+                  final onlineUids = onlineSnapshot.data ?? {};
 
-                      final user = activeUsers[index - 1];
-                      final name = user['name'] as String? ?? user['displayName'] as String? ?? 'Student';
+                  return StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: _chatRepository.getUsersStream(),
+                    builder: (context, usersSnapshot) {
+                      final allUsers = usersSnapshot.data ?? [];
+                      final activeUsers = allUsers.where((u) {
+                        final uid = u['uid'] as String?;
+                        return uid != null && uid != currentUid && onlineUids.contains(uid);
+                      }).toList();
 
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, AppRoutes.newChat);
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: ChatDimensions.paddingL),
+                        itemCount: activeUsers.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 14.0),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: const BoxDecoration(
+                                      color: ChatColors.primaryPurple,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.add, color: Colors.white, size: 24),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Radar',
+                                    style: TextStyle(fontSize: 11, color: ChatColors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          final user = activeUsers[index - 1];
+                          final name = user['name'] as String? ?? user['displayName'] as String? ?? 'Student';
+                          final uid = user['uid'] as String?;
+
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(context, AppRoutes.newChat);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 14.0),
+                              child: Column(
+                                children: [
+                                  ChatAvatar(
+                                    name: name,
+                                    userId: uid,
+                                    size: 50,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: 52,
+                                    child: Text(
+                                      name.split(' ')[0],
+                                      style: const TextStyle(fontSize: 11, color: ChatColors.textSecondary),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
                         },
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 14.0),
-                          child: Column(
-                            children: [
-                              ChatAvatar(
-                                name: name,
-                                size: 50,
-                                isOnline: true,
-                              ),
-                              const SizedBox(height: 4),
-                              SizedBox(
-                                width: 52,
-                                child: Text(
-                                  name.split(' ')[0],
-                                  style: const TextStyle(fontSize: 11, color: ChatColors.textSecondary),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       );
                     },
                   );
@@ -447,6 +462,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         return ChatTile(
                           chat: chat,
                           title: title,
+                          otherUserId: otherId,
                           onTap: () {
                             Navigator.pushNamed(
                               context,
@@ -471,7 +487,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ),
       ),
 
-      // Floating "New chat" Button matching reference screenshot
+      // Floating "New chat" Button
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 12.0),
         child: FloatingActionButton.extended(

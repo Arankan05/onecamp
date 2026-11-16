@@ -33,6 +33,20 @@ class ChatModel {
   bool isPinnedFor(String userId) => pinnedBy.contains(userId);
   bool isHiddenFor(String userId) => hiddenFor.contains(userId);
 
+  String getOtherUserId(String currentUserId) {
+    return participantIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => '',
+    );
+  }
+
+  String getDisplayName(String currentUserId) {
+    if (isGroup) {
+      return groupName?.isNotEmpty == true ? groupName! : 'Group Chat';
+    }
+    return 'Student';
+  }
+
   factory ChatModel.fromMap(Map<String, dynamic> map, String documentId) {
     DateTime? parseDateTime(dynamic value) {
       if (value is Timestamp) {

@@ -61,7 +61,7 @@ class ChatDecorations {
     return InputDecoration(
       hintText: hintText,
       hintStyle: const TextStyle(
-        color: ChatColors.textLight,
+        color: Color(0xFF77718A),
         fontSize: 14.0,
       ),
       filled: true,

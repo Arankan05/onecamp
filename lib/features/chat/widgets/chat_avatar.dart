@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/presence_service.dart';
 import '../theme/chat_colors.dart';
 import '../theme/chat_dimensions.dart';
 
@@ -7,12 +8,14 @@ class ChatAvatar extends StatelessWidget {
   final double size;
   final bool isOnline;
   final bool isGroup;
-  final String? imageUrl; // Preserved in constructor signature for compatibility
+  final String? imageUrl;
+  final String? userId;
 
   const ChatAvatar({
     super.key,
     required this.name,
     this.imageUrl,
+    this.userId,
     this.size = ChatDimensions.avatarMedium,
     this.isOnline = false,
     this.isGroup = false,
@@ -31,8 +34,7 @@ class ChatAvatar extends StatelessWidget {
     return trimmed[0].toUpperCase();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildAvatarContent(bool onlineState) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -72,7 +74,7 @@ class ChatAvatar extends StatelessWidget {
             ),
           ),
         ),
-        if (isOnline)
+        if (onlineState && !isGroup)
           Positioned(
             right: 0,
             bottom: 0,
@@ -88,5 +90,20 @@ class ChatAvatar extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (userId != null && userId!.isNotEmpty && !isGroup) {
+      return StreamBuilder<bool>(
+        stream: PresenceService().getUserOnlineStream(userId!),
+        builder: (context, snapshot) {
+          final bool activeOnline = snapshot.data ?? isOnline;
+          return _buildAvatarContent(activeOnline);
+        },
+      );
+    }
+
+    return _buildAvatarContent(isOnline);
   }
 }

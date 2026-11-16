@@ -99,6 +99,27 @@ class _NewChatScreenState extends State<NewChatScreen> {
         title: const Text('New Message', style: ChatTextStyles.appBarTitle),
         backgroundColor: ChatColors.cardBackground,
         elevation: 0,
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.createGroup);
+            },
+            icon: const Icon(
+              Icons.group_add_outlined,
+              color: ChatColors.primaryPurple,
+              size: 20,
+            ),
+            label: const Text(
+              'Create Group',
+              style: TextStyle(
+                color: ChatColors.primaryPurple,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Stack(
         children: [
@@ -125,6 +146,61 @@ class _NewChatScreenState extends State<NewChatScreen> {
                   onChanged: (val) {
                     setState(() => _searchQuery = val.trim().toLowerCase());
                   },
+                ),
+              ),
+
+              // Create Group Option Card
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ChatDimensions.paddingL,
+                  vertical: ChatDimensions.paddingS,
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.createGroup);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(ChatDimensions.paddingM),
+                    decoration: BoxDecoration(
+                      color: ChatColors.cardBackground,
+                      borderRadius: BorderRadius.circular(ChatDimensions.radiusM),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0A4F1BAA),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Color(0x157B38E0),
+                          child: Icon(
+                            Icons.groups_rounded,
+                            color: ChatColors.primaryPurple,
+                            size: 22,
+                          ),
+                        ),
+                        SizedBox(width: 14),
+                        Text(
+                          'Create New Group Chat',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: ChatColors.primaryPurple,
+                          ),
+                        ),
+                        Spacer(),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: ChatColors.textLight,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 

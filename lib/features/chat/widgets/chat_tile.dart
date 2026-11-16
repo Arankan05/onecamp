@@ -10,6 +10,7 @@ class ChatTile extends StatelessWidget {
   final ChatModel chat;
   final String title;
   final String? avatarUrl;
+  final String? otherUserId;
   final bool isOnline;
   final VoidCallback onTap;
 
@@ -18,6 +19,7 @@ class ChatTile extends StatelessWidget {
     required this.chat,
     required this.title,
     this.avatarUrl,
+    this.otherUserId,
     this.isOnline = false,
     required this.onTap,
   });
@@ -63,6 +65,7 @@ class ChatTile extends StatelessWidget {
                 ChatAvatar(
                   name: title,
                   imageUrl: avatarUrl,
+                  userId: otherUserId,
                   size: ChatDimensions.avatarMedium,
                   isGroup: chat.isGroup,
                   isOnline: isOnline,
