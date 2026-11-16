@@ -7,6 +7,9 @@ import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
+import '../features/communities/screens/community_list_screen.dart';
+import '../features/communities/screens/community_details_screen.dart';
+import '../features/communities/screens/create_community_screen.dart';
 
 class AppRoutes {
   static const String initial = '/';
@@ -16,6 +19,9 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
+  static const String communityList = '/communities';
+  static const String communityDetails = '/community-details';
+  static const String createCommunity = '/create-community';
 
   static Route<dynamic> onGenerateRoute(
       RouteSettings settings,
@@ -55,6 +61,25 @@ class AppRoutes {
       case editProfile:
         return MaterialPageRoute(
           builder: (_) => const EditProfileScreen(),
+          settings: settings,
+        );
+
+      case communityList:
+        return MaterialPageRoute(
+          builder: (_) => const CommunityListScreen(),
+          settings: settings,
+        );
+
+      case communityDetails:
+        final communityId = settings.arguments as String? ?? '';
+        return MaterialPageRoute(
+          builder: (_) => CommunityDetailsScreen(communityId: communityId),
+          settings: settings,
+        );
+
+      case createCommunity:
+        return MaterialPageRoute(
+          builder: (_) => const CreateCommunityScreen(),
           settings: settings,
         );
 
