@@ -32,6 +32,7 @@ void main() {
       expect(map['latitude'], equals(6.9271));
       expect(map['longitude'], equals(79.8612));
       expect(map['attendeeCount'], equals(15));
+      expect(map['attendeeIds'], isA<List>());
 
       final restored = EventModel.fromMap('evt_123', map);
 

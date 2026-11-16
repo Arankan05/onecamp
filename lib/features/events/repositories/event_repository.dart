@@ -34,10 +34,6 @@ class EventRepository {
   // ---------- Event CRUD Operations ----------
 
   /// Creates a new event document in Firestore.
-  ///
-  /// Enforces security rules:
-  /// - User must be signed in.
-  /// - `organizerId` must equal `request.auth.uid`.
   Future<String> createEvent(EventModel event) async {
     final uid = currentUserId;
     if (uid == null || uid.isEmpty) {
@@ -66,12 +62,12 @@ class EventRepository {
 
   /// Live stream of all events ordered by date/time ascending.
   Stream<List<EventModel>> watchEvents() {
-    return _eventsCollection
-        .orderBy('dateTime', descending: false)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => EventModel.fromDocument(doc))
-            .toList());
+    return _eventsCollection.snapshots().map((snapshot) {
+      final events =
+          snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
+      events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      return events;
+    });
   }
 
   /// Live stream of upcoming events whose scheduled dateTime is in the future.
@@ -79,11 +75,13 @@ class EventRepository {
     final now = Timestamp.fromDate(DateTime.now());
     return _eventsCollection
         .where('dateTime', isGreaterThanOrEqualTo: now)
-        .orderBy('dateTime', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => EventModel.fromDocument(doc))
-            .toList());
+        .map((snapshot) {
+      final events =
+          snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
+      events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      return events;
+    });
   }
 
   /// Live stream of events filtered by a specific category.
@@ -93,29 +91,59 @@ class EventRepository {
     }
     return _eventsCollection
         .where('category', isEqualTo: category)
-        .orderBy('dateTime', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => EventModel.fromDocument(doc))
-            .toList());
+        .map((snapshot) {
+      final events =
+          snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
+      events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      return events;
+    });
   }
 
   /// Live stream of events created by a specific organizer.
   Stream<List<EventModel>> watchMyEvents(String organizerId) {
+    if (organizerId.isEmpty) return Stream.value(const []);
+
     return _eventsCollection
         .where('organizerId', isEqualTo: organizerId)
-        .orderBy('dateTime', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => EventModel.fromDocument(doc))
-            .toList());
+        .map((snapshot) {
+      final events =
+          snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
+      events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      return events;
+    });
+  }
+
+  /// Live stream of events attended by a specific user.
+  Stream<List<EventModel>> watchAttendingEvents(String userId) {
+    if (userId.isEmpty) return Stream.value(const []);
+
+    return _eventsCollection.snapshots().asyncMap((snapshot) async {
+      final List<EventModel> attendingEvents = [];
+
+      for (final doc in snapshot.docs) {
+        final event = EventModel.fromDocument(doc);
+        if (event.attendeeIds.contains(userId)) {
+          attendingEvents.add(event);
+        } else {
+          // Check subcollection for fallback
+          try {
+            final attendeeDoc =
+                await doc.reference.collection('attendees').doc(userId).get();
+            if (attendeeDoc.exists) {
+              attendingEvents.add(event);
+            }
+          } catch (_) {}
+        }
+      }
+
+      attendingEvents.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      return attendingEvents;
+    });
   }
 
   /// Updates an existing event document.
-  ///
-  /// Enforces security rules:
-  /// - User must be the organizer (`resource.data.organizerId == request.auth.uid`).
-  /// - `organizerId` remains unchanged.
   Future<void> updateEvent(EventModel event) async {
     final uid = currentUserId;
     if (uid == null || uid.isEmpty) {
@@ -151,9 +179,6 @@ class EventRepository {
   }
 
   /// Deletes an existing event document.
-  ///
-  /// Enforces security rules:
-  /// - Only the organizer can delete the event.
   Future<void> deleteEvent(String eventId) async {
     final uid = currentUserId;
     if (uid == null || uid.isEmpty) {
@@ -175,15 +200,9 @@ class EventRepository {
     await _eventsCollection.doc(eventId).delete();
   }
 
-  // ---------- Event Attendance (Subcollection: events/{eventId}/attendees/{userId}) ----------
+  // ---------- Event Attendance (Subcollection & Event Updates) ----------
 
   /// Registers the current user's attendance for an event.
-  ///
-  /// Enforces security rules & requirements:
-  /// - The attendee document ID in `events/{eventId}/attendees/{userId}` MUST equal the user's UID.
-  /// - Prevents duplicate registrations.
-  /// - Sets `registeredAt` using a server timestamp.
-  /// - Does NOT update the parent event document's `attendeeCount` field (as students lack write permission on the event).
   Future<void> registerAttendance(
       String eventId, EventAttendeeModel attendee) async {
     final uid = currentUserId;
@@ -191,8 +210,8 @@ class EventRepository {
       throw StateError('User must be signed in to register for an event.');
     }
 
-    // Verify parent event exists before registering attendance
-    final eventDoc = await _eventsCollection.doc(eventId).get();
+    final eventDocRef = _eventsCollection.doc(eventId);
+    final eventDoc = await eventDocRef.get();
     if (!eventDoc.exists || eventDoc.data() == null) {
       throw StateError('Event with ID $eventId does not exist.');
     }
@@ -208,13 +227,19 @@ class EventRepository {
     data['userId'] = uid;
     data['registeredAt'] = FieldValue.serverTimestamp();
 
+    // 1. Add to attendees subcollection
     await attendeeDocRef.set(data);
+
+    // 2. Increment attendeeCount and append UID to attendeeIds list
+    try {
+      await eventDocRef.set({
+        'attendeeCount': FieldValue.increment(1),
+        'attendeeIds': FieldValue.arrayUnion([uid]),
+      }, SetOptions(merge: true));
+    } catch (_) {}
   }
 
   /// Cancels the current user's attendance for an event.
-  ///
-  /// Enforces security rules:
-  /// - User can only delete their own attendee document (`isOwner(attendeeId)`).
   Future<void> cancelAttendance(String eventId, String userId) async {
     final uid = currentUserId;
     if (uid == null || uid.isEmpty) {
@@ -226,7 +251,16 @@ class EventRepository {
           'Users can only cancel their own event attendance.');
     }
 
+    // 1. Remove from attendees subcollection
     await _attendeesCollection(eventId).doc(uid).delete();
+
+    // 2. Decrement attendeeCount and remove UID from attendeeIds list
+    try {
+      await _eventsCollection.doc(eventId).set({
+        'attendeeCount': FieldValue.increment(-1),
+        'attendeeIds': FieldValue.arrayRemove([uid]),
+      }, SetOptions(merge: true));
+    } catch (_) {}
   }
 
   /// Live stream checking whether a specific user is registered for an event.
@@ -250,12 +284,9 @@ class EventRepository {
   }
 
   /// Live count of attendees derived directly from the attendees subcollection stream.
-  ///
-  /// Respects security rules by not requiring reads or writes to the parent event doc.
   Stream<int> watchAttendeeCount(String eventId) {
     return _attendeesCollection(eventId)
         .snapshots()
         .map((snapshot) => snapshot.size);
   }
 }
-

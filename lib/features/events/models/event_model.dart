@@ -13,6 +13,7 @@ class EventModel {
   final String organizerName;
   final String? imageUrl;
   final int attendeeCount;
+  final List<String> attendeeIds;
   final DateTime createdAt;
 
   const EventModel({
@@ -28,6 +29,7 @@ class EventModel {
     required this.organizerName,
     this.imageUrl,
     this.attendeeCount = 0,
+    this.attendeeIds = const [],
     required this.createdAt,
   });
 
@@ -47,6 +49,11 @@ class EventModel {
 
   /// Factory constructor to convert Firestore document data into an [EventModel].
   factory EventModel.fromMap(String id, Map<String, dynamic> map) {
+    final rawAttendeeIds = map['attendeeIds'];
+    final List<String> attendeeIdsList = rawAttendeeIds is List
+        ? rawAttendeeIds.map((e) => e.toString()).toList()
+        : const [];
+
     return EventModel(
       id: id,
       title: map['title'] as String? ?? '',
@@ -60,6 +67,7 @@ class EventModel {
       organizerName: map['organizerName'] as String? ?? '',
       imageUrl: map['imageUrl'] as String?,
       attendeeCount: (map['attendeeCount'] as num?)?.toInt() ?? 0,
+      attendeeIds: attendeeIdsList,
       createdAt: _parseDateTime(map['createdAt']),
     );
   }
@@ -84,6 +92,7 @@ class EventModel {
       'organizerName': organizerName,
       'imageUrl': imageUrl,
       'attendeeCount': attendeeCount,
+      'attendeeIds': attendeeIds,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -94,6 +103,9 @@ class EventModel {
   /// Formatted string of coordinates e.g. "6.9271, 79.8612" or null if absent.
   String? get coordinatesDisplay =>
       hasCoordinates ? '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}' : null;
+
+  /// Whether a given user UID is attending this event.
+  bool isUserAttending(String userId) => attendeeIds.contains(userId);
 
   /// Creates a copy of this [EventModel] with specified fields replaced.
   ///
@@ -112,6 +124,7 @@ class EventModel {
     String? organizerName,
     String? imageUrl,
     int? attendeeCount,
+    List<String>? attendeeIds,
     DateTime? createdAt,
   }) {
     return EventModel(
@@ -127,6 +140,7 @@ class EventModel {
       organizerName: organizerName ?? this.organizerName,
       imageUrl: imageUrl ?? this.imageUrl,
       attendeeCount: attendeeCount ?? this.attendeeCount,
+      attendeeIds: attendeeIds ?? this.attendeeIds,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -145,4 +159,3 @@ class EventModel {
   @override
   int get hashCode => id.hashCode;
 }
-

@@ -19,6 +19,7 @@ import '../features/events/screens/events_list_screen.dart';
 import '../features/communities/screens/community_details_screen.dart';
 import '../features/communities/screens/community_list_screen.dart';
 import '../features/communities/screens/create_community_screen.dart';
+import '../features/main/screens/main_navigation_screen.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -46,6 +47,9 @@ class AppRoutes {
   static const String createGroup = '/create_group';
   static const String chatDetails = '/chat_details';
 
+  // Main Navigation Root
+  static const String mainNav = '/main';
+
   // Events & Campus Feature Routes
   static const String eventsList = '/events';
   static const String createEvent = '/events/create';
@@ -54,6 +58,7 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes {
     return {
+      mainNav: (context) => const MainNavigationScreen(),
       chatList: (context) => const ChatListScreen(),
       newChat: (context) => const NewChatScreen(),
       createGroup: (context) => const CreateGroupScreen(),
@@ -74,6 +79,12 @@ class AppRoutes {
       case devChatEntry:
         return MaterialPageRoute(
           builder: (_) => const DevChatEntryScreen(),
+          settings: settings,
+        );
+
+      case mainNav:
+        return MaterialPageRoute(
+          builder: (_) => const MainNavigationScreen(),
           settings: settings,
         );
 

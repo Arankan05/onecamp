@@ -6,8 +6,8 @@ import 'core/constants/app_constants.dart';
 import 'core/services/firebase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/main/screens/main_navigation_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
-import 'features/profile/screens/profile_screen.dart';
 import 'routes/app_routes.dart';
 
 void main() async {
@@ -88,7 +88,7 @@ class AuthGate extends StatelessWidget {
                 data?['onboardingCompleted'] as bool? ?? false;
 
             if (onboardingCompleted) {
-              return const ProfileScreen();
+              return const MainNavigationScreen();
             }
 
             return const OnboardingScreen();
