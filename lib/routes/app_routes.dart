@@ -32,6 +32,7 @@ import '../main.dart';
 class AppRoutes {
   static const String initial = '/';
   static const String mainNavigation = '/main';
+  static const String mainNav = '/main';
 
   // Auth & Profile routes
   static const String login = '/login';
@@ -67,6 +68,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes {
     return {
       mainNavigation: (context) => const MainNavigationScreen(),
+      mainNav: (context) => const MainNavigationScreen(),
       chatList: (context) => const ChatListScreen(),
       newChat: (context) => const NewChatScreen(),
       createGroup: (context) => const CreateGroupScreen(),
@@ -86,6 +88,7 @@ class AppRoutes {
         );
 
       case mainNavigation:
+      case mainNav:
         return MaterialPageRoute(
           builder: (_) => const MainNavigationScreen(),
           settings: settings,

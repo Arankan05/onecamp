@@ -66,9 +66,9 @@ class CloudinaryUploadService {
     try {
       final XFile? file = await _picker.pickImage(
         source: source,
-        imageQuality: 85,
-        maxWidth: 1920,
-        maxHeight: 1920,
+        imageQuality: 70,
+        maxWidth: 1080,
+        maxHeight: 1080,
       );
       if (file != null) {
         _validateImageFile(file);

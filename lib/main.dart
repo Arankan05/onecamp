@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'core/constants/app_constants.dart';
@@ -46,6 +47,22 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      if (Firebase.apps.isEmpty) {
+        return const Scaffold(
+          body: Center(
+            child: Text('OneCamp Initializing...'),
+          ),
+        );
+      }
+    } catch (_) {
+      return const Scaffold(
+        body: Center(
+          child: Text('OneCamp Initializing...'),
+        ),
+      );
+    }
+
     Stream<User?>? authStream;
     try {
       authStream = FirebaseAuth.instance.authStateChanges();

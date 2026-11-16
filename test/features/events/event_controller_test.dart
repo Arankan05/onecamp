@@ -61,6 +61,10 @@ class FakeEventRepository implements EventRepository {
       Stream.value(events.values.where((e) => e.organizerId == organizerId).toList());
 
   @override
+  Stream<List<EventModel>> watchAttendingEvents(String userId) =>
+      Stream.value(events.values.where((e) => e.attendeeIds.contains(userId)).toList());
+
+  @override
   Future<void> registerAttendance(
       String eventId, EventAttendeeModel attendee) async {}
 

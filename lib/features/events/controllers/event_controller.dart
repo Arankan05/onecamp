@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/services/cloudinary_upload_service.dart';
 import '../models/event_model.dart';
 import '../models/user_position.dart';
@@ -34,6 +37,7 @@ class EventController extends ChangeNotifier {
   String? _organizerId;
   String? _organizerName;
   int _attendeeCount = 0;
+  List<String> _attendeeIds = const [];
   DateTime? _createdAt;
 
   // ---------- Asynchronous Status State ----------
@@ -63,6 +67,7 @@ class EventController extends ChangeNotifier {
   String? get organizerId => _organizerId;
   String? get organizerName => _organizerName;
   int get attendeeCount => _attendeeCount;
+  List<String> get attendeeIds => _attendeeIds;
   DateTime? get createdAt => _createdAt;
   bool get isEditing => _editingEventId != null;
 
@@ -113,23 +118,17 @@ class EventController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Updates the venue name manually.
-  ///
-  /// Retains independent editing so the user can enter or modify a
-  /// human-readable venue name without requiring reverse geocoding.
   void setLocationName(String value) {
     _locationName = value;
     notifyListeners();
   }
 
-  /// Explicitly sets coordinates.
   void setCoordinates(double? lat, double? lng) {
     _latitude = lat;
     _longitude = lng;
     notifyListeners();
   }
 
-  /// Explicitly clears GPS coordinates while keeping the venue name intact.
   void clearCoordinates() {
     _latitude = null;
     _longitude = null;
@@ -137,13 +136,11 @@ class EventController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clears any active location error banner.
   void clearLocationError() {
     _locationErrorMessage = null;
     notifyListeners();
   }
 
-  /// Clears any active save error banner.
   void clearSaveError() {
     _saveErrorMessage = null;
     notifyListeners();
@@ -151,10 +148,6 @@ class EventController extends ChangeNotifier {
 
   // ---------- Form Initialization ----------
 
-  /// Initializes the controller for editing an existing event.
-  ///
-  /// Accurately preserves existing coordinates, venue name, and metadata
-  /// so that editing other fields does not accidentally erase coordinates.
   void initForEdit(EventModel event) {
     _editingEventId = event.id;
     _title = event.title;
@@ -168,6 +161,7 @@ class EventController extends ChangeNotifier {
     _organizerId = event.organizerId;
     _organizerName = event.organizerName;
     _attendeeCount = event.attendeeCount;
+    _attendeeIds = event.attendeeIds;
     _createdAt = event.createdAt;
     _locationErrorMessage = null;
     _saveErrorMessage = null;
@@ -177,7 +171,6 @@ class EventController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Initializes the controller for creating a new event.
   void initForCreate({String? organizerId, String? organizerName}) {
     _editingEventId = null;
     _title = '';
@@ -191,6 +184,7 @@ class EventController extends ChangeNotifier {
     _organizerId = organizerId;
     _organizerName = organizerName;
     _attendeeCount = 0;
+    _attendeeIds = const [];
     _createdAt = null;
     _locationErrorMessage = null;
     _saveErrorMessage = null;
@@ -202,16 +196,6 @@ class EventController extends ChangeNotifier {
 
   // ---------- Location Integration ----------
 
-  /// Retrieves current device GPS coordinates via [LocationService].
-  ///
-  /// Expected behavior:
-  /// 1. Sets [isLoadingLocation] to true and clears previous error.
-  /// 2. Checks if location services are enabled on the device.
-  /// 3. Requests location permission if required.
-  /// 4. Handles denied and permanently denied permissions gracefully.
-  /// 5. Populates [_latitude] and [_longitude].
-  /// 6. Does NOT overwrite [_locationName] (retains manual venue name).
-  /// 7. Exposes descriptive, actionable error messages on failure.
   Future<bool> useCurrentLocation({
     Duration timeout = const Duration(seconds: 15),
   }) async {
@@ -255,16 +239,13 @@ class EventController extends ChangeNotifier {
     }
   }
 
-  /// Opens system app settings for manually granting permanently denied permissions.
   Future<bool> openAppSettings() => _locationService.openAppSettings();
 
-  /// Opens device location settings for enabling GPS hardware.
   Future<bool> openLocationSettings() =>
       _locationService.openLocationSettings();
 
   // ---------- Image Upload Operations (Cloudinary) ----------
 
-  /// Pick an image from camera or gallery and upload to Cloudinary.
   Future<void> pickAndUploadImage(ImageSource source) async {
     _isUploadingImage = true;
     _saveErrorMessage = null;
@@ -284,7 +265,6 @@ class EventController extends ChangeNotifier {
     }
   }
 
-  /// Remove attached event banner image.
   void removeImage() {
     _imageUrl = null;
     notifyListeners();
@@ -292,12 +272,6 @@ class EventController extends ChangeNotifier {
 
   // ---------- Persistence Operations ----------
 
-  /// Saves the current form state to Cloud Firestore via [EventRepository].
-  ///
-  /// - If [isEditing], updates the existing event while preserving attendee count,
-  ///   original organizer ID, and createdAt. Coordinates are preserved unless
-  ///   explicitly modified or cleared.
-  /// - If creating, creates a new event document.
   Future<String?> saveEvent({
     String? fallbackOrganizerId,
     String? fallbackOrganizerName,
@@ -314,11 +288,34 @@ class EventController extends ChangeNotifier {
         throw ArgumentError('Venue or location name cannot be empty.');
       }
 
+      User? currentUser;
+      try {
+        currentUser = FirebaseAuth.instance.currentUser;
+      } catch (_) {}
       final orgId = _organizerId ??
           fallbackOrganizerId ??
+          currentUser?.uid ??
           _eventRepository.currentUserId ??
           '';
-      final orgName = _organizerName ?? fallbackOrganizerName ?? 'Organizer';
+
+      String orgName = _organizerName ?? fallbackOrganizerName ?? '';
+      if (orgName.isEmpty && currentUser != null) {
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection(AppConstants.usersCollection)
+              .doc(currentUser.uid)
+              .get();
+          if (userDoc.exists && userDoc.data() != null) {
+            orgName = userDoc.data()?['name'] as String? ?? '';
+          }
+        } catch (_) {}
+      }
+
+      if (orgName.isEmpty) {
+        orgName = currentUser?.displayName ??
+            currentUser?.email?.split('@')[0] ??
+            'Organizer';
+      }
 
       if (orgId.isEmpty) {
         throw StateError('User must be signed in to save an event.');
@@ -344,6 +341,7 @@ class EventController extends ChangeNotifier {
           latitude: _latitude,
           longitude: _longitude,
           clearCoordinates: shouldClearCoordinates,
+          organizerName: orgName,
           imageUrl: _imageUrl,
         );
 
@@ -363,6 +361,7 @@ class EventController extends ChangeNotifier {
           organizerName: orgName,
           imageUrl: _imageUrl,
           attendeeCount: 0,
+          attendeeIds: const [],
           createdAt: DateTime.now(),
         );
 
