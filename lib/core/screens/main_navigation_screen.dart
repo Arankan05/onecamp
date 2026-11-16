@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../features/chat/screens/chat_list_screen.dart';
 import '../../features/communities/screens/community_list_screen.dart';
+import '../../features/events/screens/events_list_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
-import '../../features/feed/screens/feed_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -46,7 +46,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             HomeScreen(
               onNavigateToTab: _onTabSelected,
             ),
-            const FeedScreen(),
+            const EventsListScreen(),
             const CommunityListScreen(),
             const ChatListScreen(),
             const ProfileScreen(),
@@ -63,9 +63,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.dynamic_feed_outlined),
-            selectedIcon: Icon(Icons.dynamic_feed_rounded),
-            label: 'Feed',
+            icon: Icon(Icons.event_outlined),
+            selectedIcon: Icon(Icons.event_rounded),
+            label: 'Events',
           ),
           NavigationDestination(
             icon: Icon(Icons.groups_outlined),

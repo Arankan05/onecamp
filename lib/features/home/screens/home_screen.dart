@@ -351,46 +351,53 @@ class HomeScreen extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryColor),
+      child: InkWell(
+        onTap: () {
+          Navigator.pushNamed(context, '/campus_updates');
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryColor),
+                ),
+                title: const Text(
+                  'Campus Announcements',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Stay updated with university activities and events.'),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
               ),
-              title: const Text(
-                'Campus Announcements',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text('Stay updated with university activities and events.'),
-            ),
-            const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Want to start a new club or group?',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Want to start a new club or group?',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
                   ),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const CreateCommunityScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Create'),
-                ),
-              ],
-            ),
-          ],
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const CreateCommunityScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Create'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -398,6 +405,9 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildModuleGrid(BuildContext context) {
     final modules = [
+      _ModuleItem('Campus Events', 'Event calendar & RSVP', Icons.event_rounded, Colors.red, true, () {
+        if (onNavigateToTab != null) onNavigateToTab!(1);
+      }),
       _ModuleItem('Communities', 'Student clubs & groups', Icons.groups_rounded, Colors.blue, true, () {
         if (onNavigateToTab != null) onNavigateToTab!(2);
       }),
@@ -407,11 +417,12 @@ class HomeScreen extends StatelessWidget {
       _ModuleItem('Student Profile', 'Academic bio & skills', Icons.person_rounded, Colors.purple, true, () {
         if (onNavigateToTab != null) onNavigateToTab!(4);
       }),
-      _ModuleItem('Campus Feed', 'Social posts & news', Icons.dynamic_feed_rounded, Colors.orange, true, () {
-        if (onNavigateToTab != null) onNavigateToTab!(1);
+      _ModuleItem('Marketplace', 'Buy & sell textbooks', Icons.storefront_rounded, Colors.teal, true, () {
+        Navigator.pushNamed(context, '/marketplace');
       }),
-      _ModuleItem('Marketplace', 'Buy & sell textbooks', Icons.storefront_rounded, Colors.teal, false, null),
-      _ModuleItem('Events & Schedule', 'University calendar', Icons.event_rounded, Colors.red, false, null),
+      _ModuleItem('Campus Updates', 'University news stream', Icons.campaign_rounded, Colors.amber.shade800, true, () {
+        Navigator.pushNamed(context, '/campus_updates');
+      }),
     ];
 
     return GridView.builder(
