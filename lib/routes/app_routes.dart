@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../core/screens/main_navigation_screen.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
@@ -26,6 +27,7 @@ import '../main.dart';
 
 class AppRoutes {
   static const String initial = '/';
+  static const String mainNavigation = '/main';
 
   // Auth & Profile routes
   static const String login = '/login';
@@ -45,6 +47,7 @@ class AppRoutes {
   static const String newChat = '/new_chat';
   static const String createGroup = '/create_group';
   static const String chatDetails = '/chat_details';
+  static const String devChatEntry = '/dev_chat_entry';
 
   // Events & Campus Feature Routes
   static const String eventsList = '/events';
@@ -54,6 +57,7 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes {
     return {
+      mainNavigation: (context) => const MainNavigationScreen(),
       chatList: (context) => const ChatListScreen(),
       newChat: (context) => const NewChatScreen(),
       createGroup: (context) => const CreateGroupScreen(),
@@ -66,6 +70,13 @@ class AppRoutes {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case initial:
+      case mainNavigation:
+        return MaterialPageRoute(
+          builder: (_) => const MainNavigationScreen(),
+          settings: settings,
+        );
+
+      case devChatEntry:
         return MaterialPageRoute(
           builder: (_) => const AuthGate(),
           settings: settings,
