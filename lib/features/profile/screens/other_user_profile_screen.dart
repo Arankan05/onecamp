@@ -176,37 +176,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     }
   }
 
-  Future<void> _startVoiceCall() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
-
-    try {
-      final chatId = await _chatRepository.createDirectChat(
-        currentUserId: currentUser.uid,
-        otherUserId: widget.userId,
-      );
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CallScreen(
-            targetId: widget.userId,
-            targetName: _userProfile?.name ?? 'Student',
-            chatId: chatId,
-            isVideo: false,
-            isIncoming: false,
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Could not start call: $e')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -224,7 +193,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
           return Scaffold(
             backgroundColor: AppTheme.primaryBackground,
             appBar: AppBar(
-              title: const Text('Student Profile'),
+              title: const Text('Profile'),
               backgroundColor: AppTheme.primaryBackground,
               elevation: 0,
               leading: const OneCampBackButton(),
@@ -237,7 +206,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
         final avatarUrl = _userProfile?.profileImageUrl;
         final university = _userProfile?.university?.isNotEmpty == true
             ? _userProfile!.university!
-            : 'OneCamp Verified Student';
+            : 'OneCamp Member';
         final bio = _userProfile?.bio?.isNotEmpty == true
             ? _userProfile!.bio!
             : 'No bio added yet.';
@@ -466,37 +435,6 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: _startVoiceCall,
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor:
-                                                AppTheme.primaryColor,
-                                            side: const BorderSide(
-                                              color: AppTheme.primaryColor,
-                                              width: 1.5,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 10,
-                                            ),
-                                          ),
-                                          icon: const Icon(
-                                            Icons.call_rounded,
-                                            size: 18,
-                                          ),
-                                          label: const Text(
-                                            'Call',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                     ],
                                   ),
                                 ],
@@ -517,7 +455,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'About Student',
+                              'About',
                               style: TextStyle(
                                 fontSize: 16.0,
                                 fontWeight: FontWeight.bold,
@@ -539,7 +477,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                       const SizedBox(height: 20.0),
 
                       const Text(
-                        'Posts by Student',
+                        'Posts',
                         style: TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,

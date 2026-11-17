@@ -697,7 +697,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
                               if (isOnline) {
                                 return const Text(
-                                  'Active now • Student',
+                                  'Active now',
                                   style: ChatTextStyles.appBarSubtitle,
                                 );
                               } else if (lastSeen != null) {
@@ -721,36 +721,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             },
                           )
                         else
-                          const Text(
-                            'Student',
-                            style: ChatTextStyles.appBarSubtitle,
-                          ),
+                          const SizedBox.shrink(),
                       ],
                     ),
                   ),
                 ],
               ),
         actions: [
-          if (!widget.isGroup && widget.otherUserId != null) ...[
-            IconButton(
-              icon: const Icon(
-                Icons.call_outlined,
-                color: ChatColors.primaryPurple,
-                size: 22,
-              ),
-              onPressed: () => _startCall(isVideo: false),
-              tooltip: 'Audio Call',
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.videocam_outlined,
-                color: ChatColors.primaryPurple,
-                size: 22,
-              ),
-              onPressed: () => _startCall(isVideo: true),
-              tooltip: 'Video Call',
-            ),
-          ],
           if (_isSearchActive)
             IconButton(
               icon: const Icon(Icons.close, color: ChatColors.textPrimary),

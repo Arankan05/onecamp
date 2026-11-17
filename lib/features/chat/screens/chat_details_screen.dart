@@ -204,30 +204,28 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                         faculty.isNotEmpty ? '$faculty • $email' : email,
                         style: ChatTextStyles.chatTileSubtitle,
                       ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: ChatDimensions.paddingS,
-                          vertical: ChatDimensions.paddingXS,
-                        ),
-                        decoration: BoxDecoration(
-                          color: role == 'admin' || role == 'staff'
-                              ? const Color(0x33FFC107)
-                              : ChatColors.inputBackground,
-                          borderRadius: BorderRadius.circular(
-                            ChatDimensions.radiusS,
-                          ),
-                        ),
-                        child: Text(
-                          role.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10.0,
-                            fontWeight: FontWeight.bold,
-                            color: role == 'admin' || role == 'staff'
-                                ? Colors.deepOrange
-                                : ChatColors.primaryPurple,
-                          ),
-                        ),
-                      ),
+                      trailing: (role == 'admin' || role == 'staff')
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: ChatDimensions.paddingS,
+                                vertical: ChatDimensions.paddingXS,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0x33FFC107),
+                                borderRadius: BorderRadius.circular(
+                                  ChatDimensions.radiusS,
+                                ),
+                              ),
+                              child: Text(
+                                role.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 10.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepOrange,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
                   );
                 },

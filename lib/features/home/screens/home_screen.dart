@@ -1129,24 +1129,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        role,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -1257,7 +1239,7 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       _ModuleItem(
-        'Student Profile',
+        'Profile',
         'Academic bio & skills',
         Icons.person_rounded,
         Colors.purple,

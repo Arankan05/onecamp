@@ -281,24 +281,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
-                  // User Role Badge
-                  Chip(
-                    avatar: Icon(
-                      Icons.badge_outlined,
-                      size: 14,
-                      color: theme.colorScheme.primary,
-                    ),
-                    label: Text(
-                      profile.role.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 16),
 
                   // Real Followers / Following Counters

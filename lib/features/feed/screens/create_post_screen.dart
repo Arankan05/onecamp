@@ -196,7 +196,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       ),
                     )
                   : const Icon(Icons.send_rounded, size: 16),
-              label: Text(_isLoading ? 'Publishing...' : 'Publish'),
+              label: Text(_isLoading ? 'Posting...' : 'Post'),
             ),
           ),
         ],
@@ -374,6 +374,43 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // Primary Full-Width Post Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _publishPost,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 2,
+                        ),
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.send_rounded, size: 20),
+                        label: Text(
+                          _isLoading ? 'Posting...' : 'Post to Feed',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
