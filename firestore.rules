@@ -225,12 +225,16 @@ service cloud.firestore {
               )
             )
           )
-          && request.resource.data.messageType in ['text', 'image', 'document', 'audio', 'voice']
+          && request.resource.data.messageType in ['text', 'image', 'document', 'audio', 'voice', 'call']
           && request.resource.data.readBy == [request.auth.uid]
           && request.resource.data.isDeleted == false
           && request.resource.data.hiddenFor == []
           && (
             (request.resource.data.messageType == 'text'
+              && request.resource.data.text is string
+              && request.resource.data.text.trim().size() > 0)
+            ||
+            (request.resource.data.messageType == 'call'
               && request.resource.data.text is string
               && request.resource.data.text.trim().size() > 0)
             ||
@@ -320,10 +324,21 @@ service cloud.firestore {
 
     // 9. WebRTC Calls
     match /calls/{callId} {
-      allow read, update, delete: if isSignedIn()
-        && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.targetId);
+      allow read: if isSignedIn();
+
       allow create: if isSignedIn()
-        && (request.auth.uid == request.resource.data.callerId || request.auth.uid == request.resource.data.targetId);
+        && request.resource.data.callerId == request.auth.uid
+        && request.resource.data.targetId is string
+        && request.resource.data.chatId is string
+        && request.resource.data.status in ['ringing', 'connecting', 'active', 'declined', 'ended', 'missed'];
+
+      allow update: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.targetId)
+        && request.resource.data.callerId == resource.data.callerId
+        && request.resource.data.targetId == resource.data.targetId;
+
+      allow delete: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.targetId);
 
       match /offerCandidates/{candidateId} {
         allow read, write: if isSignedIn();

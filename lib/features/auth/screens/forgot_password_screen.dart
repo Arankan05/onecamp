@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../../../core/widgets/responsive_form_container.dart';
 import '../controllers/auth_controller.dart';
 import '../models/auth_state.dart';
@@ -9,12 +11,10 @@ class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() =>
-      _ForgotPasswordScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState
-    extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final AuthController _authController = AuthController();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -47,8 +47,7 @@ class _ForgotPasswordScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _authController.state.errorMessage ??
-                'Unable to send reset email.',
+            _authController.state.errorMessage ?? 'Unable to send reset email.',
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
@@ -61,14 +60,17 @@ class _ForgotPasswordScreenState
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Forgot Password'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
       ),
       body: AnimatedBuilder(
         animation: _authController,
         builder: (context, child) {
-          final isLoading =
-              _authController.state.status == AuthStatus.loading;
+          final isLoading = _authController.state.status == AuthStatus.loading;
 
           return ResponsiveFormContainer(
             child: Form(
@@ -94,20 +96,14 @@ class _ForgotPasswordScreenState
                   const Text(
                     'Reset Your Password',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Enter your registered email address. '
                     'We will send you a password reset link.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
                   TextFormField(
@@ -123,9 +119,8 @@ class _ForgotPasswordScreenState
                         return 'Please enter your email.';
                       }
 
-                      if (!RegExp(
-                        r'^[^@]+@[^@]+\.[^@]+$',
-                      ).hasMatch(value.trim())) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
+                          .hasMatch(value.trim())) {
                         return 'Please enter a valid email.';
                       }
 

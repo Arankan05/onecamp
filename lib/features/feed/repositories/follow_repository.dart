@@ -1,11 +1,13 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../../notifications/services/notification_service.dart';
 
 class FollowRepository {
   final FirebaseFirestore _firestore;
+  final NotificationService _notificationService = NotificationService();
 
   FollowRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Follow another student
   Future<void> followUser({
@@ -41,6 +43,16 @@ class FollowRepository {
     });
 
     await batch.commit();
+
+    // Trigger persistent in-app notification
+    await _notificationService.sendNotification(
+      recipientUserId: targetUserId,
+      actorId: currentUserId,
+      type: 'follow',
+      title: 'New Follower',
+      body: 'A campus student started following your profile.',
+      targetId: currentUserId,
+    );
   }
 
   // Unfollow a student
@@ -97,8 +109,50 @@ class FollowRepository {
     return _firestore
         .collection('users')
         .doc(userId)
-        .collection('followers')        
+        .collection('followers')
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
+  }
+
+  // Get list of followed user IDs
+  Stream<List<String>> getFollowingUserIdsStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('following')
+        .snapshots()
+        .map((snapshot) {
+          final Set<String> ids = {};
+          for (final doc in snapshot.docs) {
+            ids.add(doc.id);
+            final data = doc.data();
+            final uidVal = data['userId'] as String?;
+            if (uidVal != null && uidVal.isNotEmpty) {
+              ids.add(uidVal);
+            }
+          }
+          return ids.toList();
+        });
+  }
+
+  // Get list of follower user IDs
+  Stream<List<String>> getFollowerUserIdsStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('followers')
+        .snapshots()
+        .map((snapshot) {
+          final Set<String> ids = {};
+          for (final doc in snapshot.docs) {
+            ids.add(doc.id);
+            final data = doc.data();
+            final uidVal = data['userId'] as String?;
+            if (uidVal != null && uidVal.isNotEmpty) {
+              ids.add(uidVal);
+            }
+          }
+          return ids.toList();
+        });
   }
 }

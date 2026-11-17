@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -73,8 +74,13 @@ class CallService {
 
   static const Map<String, dynamic> _iceConfiguration = {
     'iceServers': [
-      {'urls': ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
-    ]
+      {
+        'urls': [
+          'stun:stun.l.google.com:19302',
+          'stun:stun1.l.google.com:19302',
+        ],
+      },
+    ],
   };
 
   /// Stream incoming ringing calls for the current user.
@@ -88,14 +94,16 @@ class CallService {
         .where('status', isEqualTo: 'ringing')
         .snapshots()
         .map((snapshot) {
-      if (snapshot.docs.isEmpty) return null;
-      return CallModel.fromDocument(snapshot.docs.first);
-    });
+          if (snapshot.docs.isEmpty) return null;
+          return CallModel.fromDocument(snapshot.docs.first);
+        });
   }
 
   /// Stream updates for a specific active call document.
   Stream<CallModel?> getCallStream(String callId) {
-    return _firestore.collection('calls').doc(callId).snapshots().map((snapshot) {
+    return _firestore.collection('calls').doc(callId).snapshots().map((
+      snapshot,
+    ) {
       if (!snapshot.exists) return null;
       return CallModel.fromDocument(snapshot);
     });
@@ -114,7 +122,8 @@ class CallService {
     final callerUid = _auth.currentUser?.uid;
     if (callerUid == null) throw Exception('Must be signed in to call.');
 
-    final callerName = _auth.currentUser?.displayName ?? _auth.currentUser?.email ?? 'Student';
+    final callerName =
+        _auth.currentUser?.displayName ?? _auth.currentUser?.email ?? 'Student';
 
     final callDocRef = _firestore.collection('calls').doc();
     final callId = callDocRef.id;
@@ -129,7 +138,9 @@ class CallService {
       'video': isVideo ? {'facingMode': 'user'} : false,
     };
 
-    final MediaStream localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    final MediaStream localStream = await navigator.mediaDevices.getUserMedia(
+      mediaConstraints,
+    );
     localRenderer.srcObject = localStream;
 
     localStream.getTracks().forEach((track) {
@@ -173,7 +184,10 @@ class CallService {
       final remoteDesc = await pc.getRemoteDescription();
       if (data != null && data['answer'] != null && remoteDesc == null) {
         final answerMap = data['answer'] as Map<String, dynamic>;
-        final answer = RTCSessionDescription(answerMap['sdp'], answerMap['type']);
+        final answer = RTCSessionDescription(
+          answerMap['sdp'],
+          answerMap['type'],
+        );
         await pc.setRemoteDescription(answer);
 
         // Update call status to active
@@ -219,7 +233,9 @@ class CallService {
       'video': call.isVideo ? {'facingMode': 'user'} : false,
     };
 
-    final MediaStream localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    final MediaStream localStream = await navigator.mediaDevices.getUserMedia(
+      mediaConstraints,
+    );
     localRenderer.srcObject = localStream;
 
     localStream.getTracks().forEach((track) {
@@ -239,7 +255,10 @@ class CallService {
 
     // Set Remote Description from Caller Offer
     if (call.offer != null) {
-      final offer = RTCSessionDescription(call.offer!['sdp'], call.offer!['type']);
+      final offer = RTCSessionDescription(
+        call.offer!['sdp'],
+        call.offer!['type'],
+      );
       await pc.setRemoteDescription(offer);
     }
 

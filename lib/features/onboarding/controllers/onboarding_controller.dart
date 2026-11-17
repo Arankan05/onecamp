@@ -2,12 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../profile/repositories/profile_repository.dart';
 
-enum OnboardingStatus {
-  initial,
-  loading,
-  success,
-  error,
-}
+enum OnboardingStatus { initial, loading, success, error }
 
 class OnboardingController extends ChangeNotifier {
   final ProfileRepository? profileRepository;
@@ -15,12 +10,9 @@ class OnboardingController extends ChangeNotifier {
   OnboardingStatus _status = OnboardingStatus.initial;
   String? _errorMessage;
 
-  OnboardingController({
-    this.profileRepository,
-  });
+  OnboardingController({this.profileRepository});
 
-  ProfileRepository get _repository =>
-      profileRepository ?? ProfileRepository();
+  ProfileRepository get _repository => profileRepository ?? ProfileRepository();
 
   OnboardingStatus get status => _status;
   String? get errorMessage => _errorMessage;
@@ -58,8 +50,7 @@ class OnboardingController extends ChangeNotifier {
       return true;
     } catch (_) {
       _status = OnboardingStatus.error;
-      _errorMessage =
-          'Failed to complete onboarding. Please try again.';
+      _errorMessage = 'Failed to complete onboarding. Please try again.';
       notifyListeners();
       return false;
     }

@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -9,11 +8,9 @@ class AuthRepository {
   final AuthService _authService;
   final FirebaseFirestore _firestore;
 
-  AuthRepository({
-    AuthService? authService,
-    FirebaseFirestore? firestore,
-  })  : _authService = authService ?? AuthService(),
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepository({AuthService? authService, FirebaseFirestore? firestore})
+    : _authService = authService ?? AuthService(),
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Register a student and create their Firestore profile
   Future<UserCredential> registerStudent({
@@ -37,13 +34,13 @@ class AuthRepository {
           .collection(AppConstants.usersCollection)
           .doc(user.uid)
           .set({
-        'uid': user.uid,
-        'name': name.trim(),
-        'email': email.trim(),
-        'role': 'student',
-        'onboardingCompleted': false,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+            'uid': user.uid,
+            'name': name.trim(),
+            'email': email.trim(),
+            'role': 'student',
+            'onboardingCompleted': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
     } catch (error) {
       // Remove the newly created account if profile creation fails.
       try {
@@ -63,10 +60,7 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    return await _authService.login(
-      email: email,
-      password: password,
-    );
+    return await _authService.login(email: email, password: password);
   }
 
   // Logout the current user
@@ -75,9 +69,7 @@ class AuthRepository {
   }
 
   // Send password reset email
-  Future<void> resetPassword({
-    required String email,
-  }) async {
+  Future<void> resetPassword({required String email}) async {
     await _authService.resetPassword(email: email);
   }
 

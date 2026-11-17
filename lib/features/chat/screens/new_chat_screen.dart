@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../repositories/chat_repository.dart';
 import '../theme/chat_colors.dart';
 import '../theme/chat_decorations.dart';
 import '../theme/chat_dimensions.dart';
 import '../theme/chat_text_styles.dart';
 import '../widgets/chat_avatar.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../../../routes/app_routes.dart';
 
 class NewChatScreen extends StatefulWidget {
   final ChatRepository? chatRepository;
 
-  const NewChatScreen({
-    super.key,
-    this.chatRepository,
-  });
+  const NewChatScreen({super.key, this.chatRepository});
 
   @override
   State<NewChatScreen> createState() => _NewChatScreenState();
@@ -39,7 +38,8 @@ class _NewChatScreenState extends State<NewChatScreen> {
   }
 
   Future<void> _startChatWithUser(Map<String, dynamic> targetUser) async {
-    final currentUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final currentUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     final otherUid = targetUser['uid'] as String?;
 
     if (currentUid == null || otherUid == null || otherUid.isEmpty) {
@@ -60,7 +60,8 @@ class _NewChatScreenState extends State<NewChatScreen> {
         otherUserId: otherUid,
       );
 
-      final title = targetUser['name'] as String? ??
+      final title =
+          targetUser['name'] as String? ??
           targetUser['displayName'] as String? ??
           targetUser['email'] as String? ??
           'Student';
@@ -99,6 +100,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
         title: const Text('New Message', style: ChatTextStyles.appBarTitle),
         backgroundColor: ChatColors.cardBackground,
         elevation: 0,
+        leading: const OneCampBackButton(),
         actions: [
           TextButton.icon(
             onPressed: () {
@@ -131,18 +133,27 @@ class _NewChatScreenState extends State<NewChatScreen> {
                 padding: const EdgeInsets.all(ChatDimensions.paddingL),
                 child: TextField(
                   controller: _searchController,
-                  decoration: ChatDecorations.inputDecoration('Search student name or faculty...').copyWith(
-                    prefixIcon: const Icon(Icons.search, color: ChatColors.textLight),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: ChatColors.textLight),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                  ),
+                  decoration:
+                      ChatDecorations.inputDecoration(
+                        'Search student name or faculty...',
+                      ).copyWith(
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: ChatColors.textLight,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: ChatColors.textLight,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                      ),
                   onChanged: (val) {
                     setState(() => _searchQuery = val.trim().toLowerCase());
                   },
@@ -163,7 +174,9 @@ class _NewChatScreenState extends State<NewChatScreen> {
                     padding: const EdgeInsets.all(ChatDimensions.paddingM),
                     decoration: BoxDecoration(
                       color: ChatColors.cardBackground,
-                      borderRadius: BorderRadius.circular(ChatDimensions.radiusM),
+                      borderRadius: BorderRadius.circular(
+                        ChatDimensions.radiusM,
+                      ),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x0A4F1BAA),
@@ -214,16 +227,21 @@ class _NewChatScreenState extends State<NewChatScreen> {
                     return StreamBuilder<List<Map<String, dynamic>>>(
                       stream: _chatRepository.getUsersStream(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Center(
-                            child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                            child: CircularProgressIndicator(
+                              color: ChatColors.primaryPurple,
+                            ),
                           );
                         }
 
                         if (snapshot.hasError) {
                           return Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(ChatDimensions.paddingXL),
+                              padding: const EdgeInsets.all(
+                                ChatDimensions.paddingXL,
+                              ),
                               child: Text(
                                 'Error loading students: ${snapshot.error}',
                                 style: ChatTextStyles.chatTileSubtitle,
@@ -240,9 +258,18 @@ class _NewChatScreenState extends State<NewChatScreen> {
                           if (blockedUids.contains(uid)) return false;
 
                           if (_searchQuery.isEmpty) return true;
-                          final name = (u['name'] as String? ?? u['displayName'] as String? ?? '').toLowerCase();
-                          final email = (u['email'] as String? ?? '').toLowerCase();
-                          final faculty = (u['faculty'] as String? ?? u['department'] as String? ?? '').toLowerCase();
+                          final name =
+                              (u['name'] as String? ??
+                                      u['displayName'] as String? ??
+                                      '')
+                                  .toLowerCase();
+                          final email = (u['email'] as String? ?? '')
+                              .toLowerCase();
+                          final faculty =
+                              (u['faculty'] as String? ??
+                                      u['department'] as String? ??
+                                      '')
+                                  .toLowerCase();
 
                           return name.contains(_searchQuery) ||
                               email.contains(_searchQuery) ||
@@ -261,16 +288,22 @@ class _NewChatScreenState extends State<NewChatScreen> {
                         }
 
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(vertical: ChatDimensions.paddingS),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: ChatDimensions.paddingS,
+                          ),
                           itemCount: filteredUsers.length,
                           itemBuilder: (context, index) {
                             final user = filteredUsers[index];
-                            final name = user['name'] as String? ??
+                            final name =
+                                user['name'] as String? ??
                                 user['displayName'] as String? ??
                                 user['email'] as String? ??
                                 'Student';
                             final email = user['email'] as String? ?? '';
-                            final faculty = user['faculty'] as String? ?? user['department'] as String? ?? '';
+                            final faculty =
+                                user['faculty'] as String? ??
+                                user['department'] as String? ??
+                                '';
 
                             return Container(
                               margin: const EdgeInsets.symmetric(
@@ -279,14 +312,21 @@ class _NewChatScreenState extends State<NewChatScreen> {
                               ),
                               decoration: ChatDecorations.cardDecoration,
                               child: ListTile(
-                                onTap: _isCreatingChat ? null : () => _startChatWithUser(user),
+                                onTap: _isCreatingChat
+                                    ? null
+                                    : () => _startChatWithUser(user),
                                 leading: ChatAvatar(
                                   name: name,
                                   size: ChatDimensions.avatarMedium,
                                 ),
-                                title: Text(name, style: ChatTextStyles.chatTileTitle),
+                                title: Text(
+                                  name,
+                                  style: ChatTextStyles.chatTileTitle,
+                                ),
                                 subtitle: Text(
-                                  faculty.isNotEmpty ? '$faculty • $email' : email,
+                                  faculty.isNotEmpty
+                                      ? '$faculty • $email'
+                                      : email,
                                   style: ChatTextStyles.chatTileSubtitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -311,7 +351,9 @@ class _NewChatScreenState extends State<NewChatScreen> {
             Container(
               color: Colors.black26,
               child: const Center(
-                child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                child: CircularProgressIndicator(
+                  color: ChatColors.primaryPurple,
+                ),
               ),
             ),
         ],

@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+
 import '../constants/app_constants.dart';
 import '../../routes/app_routes.dart';
 
@@ -12,7 +14,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class ChatNotificationService {
-  static final ChatNotificationService _instance = ChatNotificationService._internal();
+  static final ChatNotificationService _instance =
+      ChatNotificationService._internal();
   factory ChatNotificationService() => _instance;
   ChatNotificationService._internal();
 
@@ -91,10 +94,12 @@ class ChatNotificationService {
     if (uid == null) return;
 
     try {
-      await _firestore.collection(AppConstants.usersCollection).doc(uid).update({
-        'fcmToken': token,
-        'fcmTokenLastUpdated': FieldValue.serverTimestamp(),
-      });
+      await _firestore.collection(AppConstants.usersCollection).doc(uid).update(
+        {
+          'fcmToken': token,
+          'fcmTokenLastUpdated': FieldValue.serverTimestamp(),
+        },
+      );
     } catch (_) {
       // If update fails (e.g. document doesn't exist yet), set with merge
       await _firestore.collection(AppConstants.usersCollection).doc(uid).set({
@@ -115,8 +120,10 @@ class ChatNotificationService {
     }
 
     final RemoteNotification? notification = message.notification;
-    final String title = notification?.title ?? data['senderName'] ?? 'OneCamp Chat';
-    final String body = notification?.body ?? data['body'] ?? 'New message received';
+    final String title =
+        notification?.title ?? data['senderName'] ?? 'OneCamp Chat';
+    final String body =
+        notification?.body ?? data['body'] ?? 'New message received';
 
     final BuildContext? context = _navigatorKey?.currentContext;
     if (context != null) {
@@ -125,7 +132,9 @@ class ChatNotificationService {
           duration: const Duration(seconds: 4),
           backgroundColor: const Color(0xFF29213F),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           content: Row(
             children: [
               const Icon(Icons.chat_bubble_outline, color: Color(0xFFE5DCF6)),
@@ -137,13 +146,20 @@ class ChatNotificationService {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
                     ),
                     Text(
                       body,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFFE5DCF6), fontSize: 12),
+                      style: const TextStyle(
+                        color: Color(0xFFE5DCF6),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -169,7 +185,8 @@ class ChatNotificationService {
     final String title = data['senderName'] ?? data['title'] ?? 'Chat';
     final bool isGroup = data['isGroup'] == 'true';
     final String? otherUserId = data['senderId'];
-    final List<String> participantIds = (data['participantIds'] as String?)?.split(',') ?? [];
+    final List<String> participantIds =
+        (data['participantIds'] as String?)?.split(',') ?? [];
 
     if (_navigatorKey != null && _navigatorKey!.currentState != null) {
       _navigatorKey!.currentState!.pushNamed(

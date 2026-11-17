@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../../../../core/constants/app_constants.dart';
-import '../../../../routes/app_routes.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
+import '../../../routes/app_routes.dart';
+import '../../chat/repositories/chat_repository.dart';
 import '../models/marketplace_item.dart';
 import '../repositories/marketplace_repository.dart';
-import '../theme/marketplace_theme.dart';
-import '../widgets/item_card.dart';
 
 /// Detailed view for a single marketplace listing redesigned according to Figma specifications.
 class ItemDetailScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   late MarketplaceItem _item;
   late final MarketplaceRepository _repository;
   final PageController _pageController = PageController();
+  final ChatRepository _chatRepository = ChatRepository();
   int _currentImageIndex = 0;
   bool _isLoading = false;
 
@@ -51,41 +54,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           .doc(_item.sellerId)
           .get();
 
-      if (doc.exists && doc.data() != null) {
-        if (mounted) {
-          setState(() {
-            _sellerProfile = doc.data();
-          });
-        }
+      if (doc.exists && doc.data() != null && mounted) {
+        setState(() {
+          _sellerProfile = doc.data();
+        });
       }
     } catch (_) {}
   }
 
-  String get _sellerDisplayName {
-    if (_sellerProfile != null) {
-      final name =
-          _sellerProfile!['displayName'] as String? ??
-          _sellerProfile!['name'] as String?;
-      if (name != null && name.trim().isNotEmpty) return name;
-    }
-    if (_item.sellerName.trim().isNotEmpty) return _item.sellerName;
-    if (_item.sellerEmail.contains('@')) {
-      return _item.sellerEmail.split('@').first;
-    }
-    return 'Campus Seller';
-  }
-
-  String? get _sellerPhotoUrl {
-    if (_sellerProfile != null) {
-      final photo =
-          _sellerProfile!['photoUrl'] as String? ??
-          _sellerProfile!['photoURL'] as String?;
-      if (photo != null && photo.trim().isNotEmpty) return photo;
-    }
-    return _item.sellerPhotoUrl;
-  }
-
-  String get _formattedPostTime {
+  String get _timeAgo {
     if (_item.createdAt == null) return 'Posted recently';
     final now = DateTime.now();
     final difference = now.difference(_item.createdAt!);
@@ -119,9 +96,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              newStatus == AppConstants.statusSold
-                  ? 'Listing marked as Sold.'
-                  : 'Listing marked as Available.',
+              _item.isAvailable
+                  ? 'Item marked as Available.'
+                  : 'Item marked as Sold.',
             ),
             behavior: SnackBarBehavior.floating,
           ),
@@ -134,7 +111,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           SnackBar(
             content: Text('Failed to update status: $e'),
             backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -190,33 +166,156 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
-  void _onSharePressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Listing link for "${_item.title}" copied to clipboard.'),
-        behavior: SnackBarBehavior.floating,
+  void _onSharePressed() async {
+    await Clipboard.setData(
+      ClipboardData(
+        text:
+            'Check out "${_item.title}" for \$${_item.price.toStringAsFixed(2)} on OneCamp Marketplace!',
       ),
     );
-  }
-
-  void _onContactSellerPressed() {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Real-time Chat feature is coming soon when the Chat module is deployed!',
+          'Listing details for "${_item.title}" copied to clipboard.',
         ),
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
-  void _onMakeOfferPressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Make Offer is a future feature coming soon!'),
-        behavior: SnackBarBehavior.floating,
+  Future<void> _onContactSellerPressed() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to message the seller.')),
+      );
+      return;
+    }
+
+    if (currentUser.uid == _item.sellerId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This is your own marketplace listing.')),
+      );
+      return;
+    }
+
+    try {
+      final chatId = await _chatRepository.createDirectChat(
+        currentUserId: currentUser.uid,
+        otherUserId: _item.sellerId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushNamed(
+        context,
+        AppRoutes.chatRoom,
+        arguments: {
+          'chatId': chatId,
+          'title': _sellerProfile?['name'] as String? ?? _item.sellerName,
+          'isGroup': false,
+          'avatarUrl': _sellerProfile?['profileImageUrl'] as String?,
+          'participantIds': [currentUser.uid, _item.sellerId],
+          'otherUserId': _item.sellerId,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open seller conversation: $e')),
+      );
+    }
+  }
+
+  Future<void> _onMakeOfferPressed() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to make an offer.')),
+      );
+      return;
+    }
+
+    final offerController = TextEditingController(
+      text: _item.price.toStringAsFixed(2),
+    );
+
+    final bool? shouldSend = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text('Make an Offer for ${_item.title}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter your offer price in \$:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: offerController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                prefixText: '\$ ',
+                labelText: 'Offer Amount',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Send Offer'),
+          ),
+        ],
       ),
     );
+
+    if (shouldSend == true && mounted) {
+      try {
+        final chatId = await _chatRepository.createDirectChat(
+          currentUserId: currentUser.uid,
+          otherUserId: _item.sellerId,
+        );
+
+        await _chatRepository.sendMessage(
+          chatId: chatId,
+          senderId: currentUser.uid,
+          text:
+              'Hi! I would like to offer \$${offerController.text.trim()} for your "${_item.title}". Is it still available?',
+        );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Offer sent to seller via Direct Message!'),
+          ),
+        );
+
+        Navigator.pushNamed(
+          context,
+          AppRoutes.chatRoom,
+          arguments: {
+            'chatId': chatId,
+            'title': _sellerProfile?['name'] as String? ?? _item.sellerName,
+            'isGroup': false,
+            'avatarUrl': _sellerProfile?['profileImageUrl'] as String?,
+            'participantIds': [currentUser.uid, _item.sellerId],
+            'otherUserId': _item.sellerId,
+          },
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not send offer: $e')));
+      }
+    }
   }
 
   @override
@@ -224,20 +323,27 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final images = _item.imageUrls;
 
     return Scaffold(
-      backgroundColor: MarketplaceTheme.background,
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Item details'),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.primaryBackground,
         elevation: 0,
+        leading: const OneCampBackButton(),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_outlined),
+            icon: const Icon(
+              Icons.share_outlined,
+              color: AppTheme.primaryColor,
+            ),
             onPressed: _onSharePressed,
           ),
           if (_isOwner) ...[
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: AppTheme.primaryColor,
+              ),
               onPressed: _isLoading
                   ? null
                   : () async {
@@ -253,214 +359,186 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     },
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
               onPressed: _isLoading ? null : _confirmDelete,
             ),
           ],
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: MarketplaceTheme.primary),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Carousel with Page Indicator
+            Stack(
+              children: [
+                Container(
+                  height: 280,
+                  width: double.infinity,
+                  color: Colors.white,
+                  child: images.isNotEmpty
+                      ? PageView.builder(
+                          controller: _pageController,
+                          itemCount: images.length,
+                          onPageChanged: (index) {
+                            setState(() => _currentImageIndex = index);
+                          },
+                          itemBuilder: (context, index) {
+                            return Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (_, _, _) => const Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                        ),
+                ),
+                if (images.length > 1)
+                  Positioned(
+                    bottom: 12,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(images.length, (index) {
+                        return Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentImageIndex == index
+                                ? AppTheme.primaryColor
+                                : Colors.white70,
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _item.isAvailable ? Colors.green : Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _item.status.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Hero Image Carousel Stack
-                  Container(
-                    height: 300,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: MarketplaceTheme.cardBackground,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: MarketplaceTheme.cardShadow,
-                    ),
-                    child: images.isNotEmpty
-                        ? Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              PageView.builder(
-                                controller: _pageController,
-                                itemCount: images.length,
-                                onPageChanged: (index) {
-                                  setState(() => _currentImageIndex = index);
-                                },
-                                itemBuilder: (context, index) {
-                                  return Image.network(
-                                    images[index],
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (
-                                      context,
-                                      error,
-                                      stackTrace,
-                                    ) => _buildImagePlaceholder(),
-                                  );
-                                },
-                              ),
+                  // Title and Price
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _item.title,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '\$${_item.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                              // White Favorite Heart Button (Visual Placeholder)
-                              Positioned(
-                                bottom: 12,
-                                left: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.favorite_border,
-                                    size: 20,
-                                    color: MarketplaceTheme.primary,
-                                  ),
-                                ),
-                              ),
+                  const SizedBox(height: 6),
 
-                              // Image Count Badge Tag
-                              Positioned(
-                                bottom: 12,
-                                right: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.65),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${_currentImageIndex + 1} / ${images.length}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : _buildImagePlaceholder(),
+                  // Posted Time and Category
+                  Row(
+                    children: [
+                      Text(
+                        _timeAgo,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('•', style: TextStyle(color: Colors.grey)),
+                      const SizedBox(width: 8),
+                      Chip(
+                        label: Text(
+                          _item.category,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 16),
 
-                  // 2. Product Details Container
+                  // Description Card
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: MarketplaceTheme.cardBackground,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: MarketplaceTheme.cardShadow,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Price & Condition Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              ItemCard.formatLkrPrice(_item.price),
-                              style: const TextStyle(
-                                color: MarketplaceTheme.primary,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: MarketplaceTheme.successBackground,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _item.condition,
-                                style: const TextStyle(
-                                  color: MarketplaceTheme.successText,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Title
-                        Text(
-                          _item.title,
-                          style: const TextStyle(
-                            color: MarketplaceTheme.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Location & Posted Time Row
-                        Row(
-                          children: [
-                            if (_item.location != null &&
-                                _item.location!.isNotEmpty) ...[
-                              const Icon(
-                                Icons.location_on_outlined,
-                                size: 16,
-                                color: MarketplaceTheme.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _item.location!,
-                                style: const TextStyle(
-                                  color: MarketplaceTheme.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                            ],
-                            const Icon(
-                              Icons.access_time,
-                              size: 14,
-                              color: MarketplaceTheme.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _formattedPostTime,
-                              style: const TextStyle(
-                                color: MarketplaceTheme.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const Divider(height: 24),
-
-                        // Description Section
                         const Text(
                           'Description',
                           style: TextStyle(
-                            color: MarketplaceTheme.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           _item.description.isNotEmpty
                               ? _item.description
-                              : 'No detailed description provided.',
-                          style: const TextStyle(
-                            color: MarketplaceTheme.textSecondary,
+                              : 'No description provided.',
+                          style: TextStyle(
                             fontSize: 13,
+                            color: Colors.grey.shade800,
                             height: 1.4,
                           ),
                         ),
@@ -468,28 +546,28 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
-                  // 3. Seller Information Card
+                  // Seller Info Card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: MarketplaceTheme.cardBackground,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: MarketplaceTheme.cardShadow,
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
-                          radius: 24,
-                          backgroundColor: MarketplaceTheme.primaryLight,
-                          backgroundImage: _sellerPhotoUrl != null
-                              ? NetworkImage(_sellerPhotoUrl!)
+                          radius: 22,
+                          backgroundColor: AppTheme.secondaryColor,
+                          backgroundImage:
+                              _sellerProfile?['profileImageUrl'] != null
+                              ? NetworkImage(_sellerProfile!['profileImageUrl'])
                               : null,
-                          child: _sellerPhotoUrl == null
+                          child: _sellerProfile?['profileImageUrl'] == null
                               ? const Icon(
                                   Icons.person,
-                                  color: MarketplaceTheme.primary,
+                                  color: AppTheme.primaryColor,
                                 )
                               : null,
                         ),
@@ -499,30 +577,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _sellerDisplayName,
+                                _sellerProfile?['name'] as String? ??
+                                    _item.sellerName,
                                 style: const TextStyle(
-                                  color: MarketplaceTheme.textPrimary,
-                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Color(0xFF1F2937),
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.verified,
-                                    size: 14,
-                                    color: Colors.blue.shade600,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text(
+                              Text(
+                                _sellerProfile?['university'] as String? ??
                                     'Verified Student',
-                                    style: TextStyle(
-                                      color: MarketplaceTheme.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
                             ],
                           ),
@@ -531,167 +601,70 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
 
-                  // 4. Safety Reminder Card
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: MarketplaceTheme.cardBackground,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: MarketplaceTheme.cardShadow,
-                    ),
-                    child: Row(
+                  // Action Buttons
+                  if (_isOwner)
+                    ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _toggleStatus,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _item.isAvailable
+                            ? Colors.orange
+                            : Colors.green,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      icon: Icon(
+                        _item.isAvailable
+                            ? Icons.check_circle_outline
+                            : Icons.replay,
+                      ),
+                      label: Text(
+                        _item.isAvailable
+                            ? 'Mark as Sold'
+                            : 'Mark as Available',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  else
+                    Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: MarketplaceTheme.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.shield_outlined,
-                            color: MarketplaceTheme.primary,
-                            size: 20,
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _onMakeOfferPressed,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                            icon: const Icon(Icons.local_offer_outlined),
+                            label: const Text('Make Offer'),
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            'Meet at a designated campus exchange point and inspect before paying.',
-                            style: TextStyle(
-                              color: MarketplaceTheme.textSecondary,
-                              fontSize: 12,
-                              height: 1.3,
+                          child: ElevatedButton.icon(
+                            onPressed: _onContactSellerPressed,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
                             ),
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: const Text('Message Seller'),
                           ),
                         ),
                       ],
                     ),
-                  ),
                 ],
               ),
             ),
-
-      // 5. Fixed Bottom Action Bar
-      bottomSheet: Container(
-        color: MarketplaceTheme.cardBackground,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: SafeArea(
-          child: _isOwner
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _toggleStatus,
-                        icon: Icon(
-                          _item.isAvailable
-                              ? Icons.check_circle_outline
-                              : Icons.storefront_outlined,
-                        ),
-                        label: Text(
-                          _item.isAvailable ? 'Mark Sold' : 'Mark Available',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: MarketplaceTheme.primary,
-                          side: const BorderSide(
-                            color: MarketplaceTheme.primary,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await Navigator.pushNamed(
-                            context,
-                            AppRoutes.marketplaceEdit,
-                            arguments: _item,
-                          );
-                          final updated = await _repository.getItemById(
-                            _item.id,
-                          );
-                          if (updated != null && mounted) {
-                            setState(() => _item = updated);
-                          }
-                        },
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Edit Listing'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: MarketplaceTheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    // Make Offer Button (Visual Placeholder)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _onMakeOfferPressed,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: MarketplaceTheme.primary,
-                          side: const BorderSide(
-                            color: MarketplaceTheme.primary,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Make Offer',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Message Seller Button
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _onContactSellerPressed,
-                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        label: const Text('Message Seller'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: MarketplaceTheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImagePlaceholder() {
-    return Container(
-      color: MarketplaceTheme.background,
-      child: const Center(
-        child: Icon(
-          Icons.image_not_supported_outlined,
-          size: 64,
-          color: MarketplaceTheme.textMuted,
+          ],
         ),
       ),
     );

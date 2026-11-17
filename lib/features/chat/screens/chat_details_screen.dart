@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../repositories/chat_repository.dart';
 import '../theme/chat_colors.dart';
 import '../theme/chat_decorations.dart';
@@ -45,7 +47,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   Future<void> _loadProfiles() async {
     final List<String> idsToFetch = widget.participantIds.isNotEmpty
         ? widget.participantIds
-        : (widget.otherUserId != null ? <String>[widget.otherUserId!] : <String>[]);
+        : (widget.otherUserId != null
+              ? <String>[widget.otherUserId!]
+              : <String>[]);
 
     if (idsToFetch.isEmpty) {
       if (mounted) setState(() => _isLoading = false);
@@ -71,6 +75,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         title: const Text('Chat Info', style: ChatTextStyles.appBarTitle),
         backgroundColor: ChatColors.cardBackground,
         elevation: 0,
+        leading: const OneCampBackButton(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(ChatDimensions.paddingL),
@@ -103,10 +108,14 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: ChatColors.lightLavender,
-                      borderRadius: BorderRadius.circular(ChatDimensions.radiusXL),
+                      borderRadius: BorderRadius.circular(
+                        ChatDimensions.radiusXL,
+                      ),
                     ),
                     child: Text(
-                      widget.isGroup ? 'Group Conversation' : 'Direct Conversation',
+                      widget.isGroup
+                          ? 'Group Conversation'
+                          : 'Direct Conversation',
                       style: const TextStyle(
                         fontSize: 12.0,
                         fontWeight: FontWeight.w600,
@@ -125,7 +134,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: ChatDimensions.paddingXS),
                 child: Text(
-                  widget.isGroup ? 'Group Members (${_participantProfiles.length})' : 'User Information',
+                  widget.isGroup
+                      ? 'Group Members (${_participantProfiles.length})'
+                      : 'User Information',
                   style: const TextStyle(
                     fontSize: 14.0,
                     fontWeight: FontWeight.bold,
@@ -140,7 +151,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
             if (_isLoading)
               const Padding(
                 padding: EdgeInsets.all(ChatDimensions.paddingXL),
-                child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                child: CircularProgressIndicator(
+                  color: ChatColors.primaryPurple,
+                ),
               )
             else if (_participantProfiles.isEmpty)
               Container(
@@ -160,17 +173,25 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 itemCount: _participantProfiles.length,
                 itemBuilder: (context, index) {
                   final profile = _participantProfiles[index];
-                  final name = profile['name'] as String? ??
+                  final name =
+                      profile['name'] as String? ??
                       profile['displayName'] as String? ??
                       profile['email'] as String? ??
                       'Student';
                   final email = profile['email'] as String? ?? '';
                   final role = profile['role'] as String? ?? 'student';
-                  final faculty = profile['faculty'] as String? ?? profile['department'] as String? ?? '';
-                  final photoUrl = profile['photoUrl'] as String? ?? profile['avatarUrl'] as String?;
+                  final faculty =
+                      profile['faculty'] as String? ??
+                      profile['department'] as String? ??
+                      '';
+                  final photoUrl =
+                      profile['photoUrl'] as String? ??
+                      profile['avatarUrl'] as String?;
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: ChatDimensions.paddingS),
+                    margin: const EdgeInsets.only(
+                      bottom: ChatDimensions.paddingS,
+                    ),
                     decoration: ChatDecorations.cardDecoration,
                     child: ListTile(
                       leading: ChatAvatar(
@@ -192,7 +213,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                           color: role == 'admin' || role == 'staff'
                               ? const Color(0x33FFC107)
                               : ChatColors.inputBackground,
-                          borderRadius: BorderRadius.circular(ChatDimensions.radiusS),
+                          borderRadius: BorderRadius.circular(
+                            ChatDimensions.radiusS,
+                          ),
                         ),
                         child: Text(
                           role.toUpperCase(),

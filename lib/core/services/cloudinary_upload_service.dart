@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
@@ -53,13 +54,16 @@ class CloudinaryUploadService {
     String? uploadPreset,
     ImagePicker? picker,
     http.Client? httpClient,
-  })  : _preset = uploadPreset ??
-            (const String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET',
-                    defaultValue: '').isNotEmpty
-                ? const String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET')
-                : 'onecamp_event_images'),
-        _picker = picker ?? ImagePicker(),
-        _httpClient = httpClient ?? http.Client();
+  }) : _preset =
+           uploadPreset ??
+           (const String.fromEnvironment(
+                 'CLOUDINARY_UPLOAD_PRESET',
+                 defaultValue: '',
+               ).isNotEmpty
+               ? const String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET')
+               : 'onecamp_event_images'),
+       _picker = picker ?? ImagePicker(),
+       _httpClient = httpClient ?? http.Client();
 
   /// Pick an image from Camera or Gallery.
   Future<XFile?> pickImage(ImageSource source) async {
@@ -96,7 +100,9 @@ class CloudinaryUploadService {
   void validateDocExtension(String extension) {
     final ext = extension.toLowerCase().replaceAll('.', '');
     if (ext.isNotEmpty && !_allowedDocExtensions.contains(ext)) {
-      throw ArgumentError('Unsupported document type (.$ext). Supported: PDF, DOC, DOCX, TXT, XLS, PPT, CSV.');
+      throw ArgumentError(
+        'Unsupported document type (.$ext). Supported: PDF, DOC, DOCX, TXT, XLS, PPT, CSV.',
+      );
     }
   }
 
@@ -104,7 +110,9 @@ class CloudinaryUploadService {
   void validateAudioExtension(String extension) {
     final ext = extension.toLowerCase().replaceAll('.', '');
     if (ext.isNotEmpty && !_allowedAudioExtensions.contains(ext)) {
-      throw ArgumentError('Unsupported audio format (.$ext). Supported: MP3, M4A, WAV, AAC, OGG.');
+      throw ArgumentError(
+        'Unsupported audio format (.$ext). Supported: MP3, M4A, WAV, AAC, OGG.',
+      );
     }
   }
 
@@ -147,10 +155,14 @@ class CloudinaryUploadService {
     final int fileSize = await file.length();
     if (fileSize > maxSizeBytes) {
       final double mb = maxSizeBytes / (1024 * 1024);
-      throw Exception('File size exceeds maximum limit of ${mb.toStringAsFixed(0)}MB.');
+      throw Exception(
+        'File size exceeds maximum limit of ${mb.toStringAsFixed(0)}MB.',
+      );
     }
 
-    final Uri uri = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/$resourceType/upload');
+    final Uri uri = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$_cloudName/$resourceType/upload',
+    );
 
     final http.MultipartRequest request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = _preset
@@ -165,7 +177,9 @@ class CloudinaryUploadService {
           .send(request)
           .timeout(const Duration(seconds: 45));
 
-      final http.Response response = await http.Response.fromStream(streamedResponse);
+      final http.Response response = await http.Response.fromStream(
+        streamedResponse,
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -205,7 +219,9 @@ class CloudinaryUploadService {
         throw Exception('Cloudinary Upload Error: $displayErrorMsg');
       }
     } on TimeoutException {
-      throw Exception('Network timeout while uploading file. Please check connection and retry.');
+      throw Exception(
+        'Network timeout while uploading file. Please check connection and retry.',
+      );
     } on SocketException {
       throw Exception('No network connection. Please reconnect and retry.');
     } catch (e) {

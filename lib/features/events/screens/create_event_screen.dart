@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../../../routes/app_routes.dart';
 import '../controllers/event_controller.dart';
 import '../models/event_model.dart';
@@ -20,11 +22,7 @@ class CreateEventScreen extends StatefulWidget {
   final EventModel? eventToEdit;
   final EventController? controller;
 
-  const CreateEventScreen({
-    super.key,
-    this.eventToEdit,
-    this.controller,
-  });
+  const CreateEventScreen({super.key, this.eventToEdit, this.controller});
 
   @override
   State<CreateEventScreen> createState() => _CreateEventScreenState();
@@ -58,10 +56,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
 
     _titleController = TextEditingController(text: _controller.title);
-    _descriptionController =
-        TextEditingController(text: _controller.description);
-    _locationController =
-        TextEditingController(text: _controller.locationName);
+    _descriptionController = TextEditingController(
+      text: _controller.description,
+    );
+    _locationController = TextEditingController(text: _controller.locationName);
   }
 
   @override
@@ -96,10 +94,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       } else {
         final event = await EventRepository().getEvent(result);
         if (event != null && mounted) {
-          Navigator.of(context).pushReplacementNamed(
-            AppRoutes.eventDetails,
-            arguments: event,
-          );
+          Navigator.of(context)
+              .pushReplacementNamed(AppRoutes.eventDetails, arguments: event);
         }
       }
     }
@@ -111,10 +107,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       listenable: _controller,
       builder: (context, _) {
         return Scaffold(
+          backgroundColor: AppTheme.primaryBackground,
           appBar: AppBar(
-            title: Text(
-              _controller.isEditing ? 'Edit Event' : 'Create Event',
-            ),
+            title: Text(_controller.isEditing ? 'Edit Event' : 'Create Event'),
+            backgroundColor: AppTheme.primaryBackground,
+            elevation: 0,
+            leading: const OneCampBackButton(),
           ),
           body: Form(
             key: _formKey,
@@ -179,8 +177,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           ),
                           if (_controller.imageUrl != null)
                             IconButton(
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Colors.red),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
                               onPressed: () => _controller.removeImage(),
                             ),
                         ],
@@ -209,8 +209,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 const Center(
-                              child: Text('Failed to load image preview'),
-                            ),
+                                  child: Text('Failed to load image preview'),
+                                ),
                           ),
                         )
                       else
@@ -220,8 +220,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               child: OutlinedButton.icon(
                                 icon: const Icon(Icons.photo_library_outlined),
                                 label: const Text('Gallery'),
-                                onPressed: () => _controller
-                                    .pickAndUploadImage(ImageSource.gallery),
+                                onPressed: () => _controller.pickAndUploadImage(
+                                  ImageSource.gallery,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -229,8 +230,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               child: OutlinedButton.icon(
                                 icon: const Icon(Icons.camera_alt_outlined),
                                 label: const Text('Camera'),
-                                onPressed: () => _controller
-                                    .pickAndUploadImage(ImageSource.camera),
+                                onPressed: () => _controller.pickAndUploadImage(
+                                  ImageSource.camera,
+                                ),
                               ),
                             ),
                           ],
@@ -259,17 +261,20 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       if (!context.mounted) return;
                       final pickedTime = await showTimePicker(
                         context: context,
-                        initialTime:
-                            TimeOfDay.fromDateTime(_controller.dateTime),
+                        initialTime: TimeOfDay.fromDateTime(
+                          _controller.dateTime,
+                        ),
                       );
                       if (pickedTime != null) {
-                        _controller.setDateTime(DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          pickedTime.hour,
-                          pickedTime.minute,
-                        ));
+                        _controller.setDateTime(
+                          DateTime(
+                            pickedDate.year,
+                            pickedDate.month,
+                            pickedDate.day,
+                            pickedTime.hour,
+                            pickedTime.minute,
+                          ),
+                        );
                       }
                     },
                   ),
@@ -294,9 +299,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Location Details',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 EventLocationInput(

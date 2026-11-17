@@ -101,8 +101,9 @@ class EventModel {
   bool get hasCoordinates => latitude != null && longitude != null;
 
   /// Formatted string of coordinates e.g. "6.9271, 79.8612" or null if absent.
-  String? get coordinatesDisplay =>
-      hasCoordinates ? '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}' : null;
+  String? get coordinatesDisplay => hasCoordinates
+      ? '${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)}'
+      : null;
 
   /// Whether a given user UID is attending this event.
   bool isUserAttending(String userId) => attendeeIds.contains(userId);

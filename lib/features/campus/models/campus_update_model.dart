@@ -51,14 +51,16 @@ class CampusUpdateModel {
       imageUrl: map['imageUrl'] as String?,
       isUrgent: map['isUrgent'] as bool? ?? false,
       createdAt: _parseDateTime(map['createdAt']),
-      updatedAt:
-          map['updatedAt'] != null ? _parseDateTime(map['updatedAt']) : null,
+      updatedAt: map['updatedAt'] != null
+          ? _parseDateTime(map['updatedAt'])
+          : null,
     );
   }
 
   /// Factory constructor to create a [CampusUpdateModel] directly from a [DocumentSnapshot].
   factory CampusUpdateModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data() ?? {};
     return CampusUpdateModel.fromMap(doc.id, data);
   }
@@ -119,4 +121,3 @@ class CampusUpdateModel {
   @override
   int get hashCode => id.hashCode;
 }
-

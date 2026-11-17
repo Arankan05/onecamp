@@ -1,13 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../../../routes/app_routes.dart';
 import '../models/event_model.dart';
 import '../repositories/event_repository.dart';
 
 enum EventViewFilter { all, myEvents, attending }
 
-/// Screen displaying a real-time list of campus events with "My Events" tab & category filtering.
+/// Screen displaying a real-time list of campus events styled to match the Messages master design.
 class EventsListScreen extends StatefulWidget {
   final EventRepository? eventRepository;
 
@@ -67,7 +69,6 @@ class _EventsListScreenState extends State<EventsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     String? currentUid;
     try {
       currentUid = FirebaseAuth.instance.currentUser?.uid;
@@ -75,11 +76,18 @@ class _EventsListScreenState extends State<EventsListScreen> {
     currentUid ??= _repository.currentUserId;
 
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Campus Events'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: Navigator.canPop(context) ? const OneCampBackButton() : null,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppTheme.primaryColor,
+            ),
             onPressed: () => setState(() {}),
           ),
         ],
@@ -89,38 +97,27 @@ class _EventsListScreenState extends State<EventsListScreen> {
           // 1. Top View Filter Tabs (All Events | My Events | Attending)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: SegmentedButton<EventViewFilter>(
-              segments: const [
-                ButtonSegment(
-                  value: EventViewFilter.all,
-                  label: Text('All Events'),
-                  icon: Icon(Icons.event_note_outlined),
-                ),
-                ButtonSegment(
-                  value: EventViewFilter.myEvents,
-                  label: Text('My Events'),
-                  icon: Icon(Icons.person_pin_outlined),
-                ),
-                ButtonSegment(
-                  value: EventViewFilter.attending,
-                  label: Text('Attending'),
-                  icon: Icon(Icons.check_circle_outline),
-                ),
-              ],
-              selected: {_viewFilter},
-              onSelectionChanged: (newSelection) {
-                setState(() {
-                  _viewFilter = newSelection.first;
-                });
-              },
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppTheme.secondaryColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  _buildSegmentTab('All Events', EventViewFilter.all),
+                  _buildSegmentTab('My Events', EventViewFilter.myEvents),
+                  _buildSegmentTab('Attending', EventViewFilter.attending),
+                ],
+              ),
             ),
           ),
 
           // 2. Category Filter Chips Horizontal Scroll
           SizedBox(
-            height: 56,
+            height: 52,
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               scrollDirection: Axis.horizontal,
               itemCount: _categories.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -130,6 +127,13 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 return ChoiceChip(
                   label: Text(category),
                   selected: isSelected,
+                  selectedColor: AppTheme.primaryColor,
+                  backgroundColor: Colors.white,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF1F2937),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                  ),
                   onSelected: (selected) {
                     if (selected) {
                       setState(() {
@@ -168,8 +172,8 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 final filteredEvents = _selectedCategory == 'All'
                     ? events
                     : events
-                        .where((e) => e.category == _selectedCategory)
-                        .toList();
+                          .where((e) => e.category == _selectedCategory)
+                          .toList();
 
                 if (filteredEvents.isEmpty) {
                   String emptyText;
@@ -187,18 +191,31 @@ class _EventsListScreenState extends State<EventsListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.event_busy,
-                            size: 64, color: Colors.grey),
+                        Icon(
+                          Icons.event_busy_rounded,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           emptyText,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade700,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
-                          icon: const Icon(Icons.add),
+                          icon: const Icon(Icons.add_rounded),
                           label: const Text('Create New Event'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
                           onPressed: () {
                             Navigator.pushNamed(context, AppRoutes.createEvent);
                           },
@@ -210,6 +227,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
 
                 return ListView.builder(
                   padding: const EdgeInsets.all(16.0),
+                  physics: const BouncingScrollPhysics(),
                   itemCount: filteredEvents.length,
                   itemBuilder: (context, index) {
                     final event = filteredEvents[index];
@@ -233,11 +251,42 @@ class _EventsListScreenState extends State<EventsListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: const Text('New Event'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(Icons.add_rounded, size: 22),
+        label: const Text(
+          'New Event',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         onPressed: () {
           Navigator.pushNamed(context, AppRoutes.createEvent);
         },
+      ),
+    );
+  }
+
+  Widget _buildSegmentTab(String label, EventViewFilter filter) {
+    final isSelected = _viewFilter == filter;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _viewFilter = filter),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              color: isSelected ? Colors.white : AppTheme.primaryColor,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -258,13 +307,22 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isOrganizer = currentUid != null && event.organizerId == currentUid;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0C7C3AED),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
       child: InkWell(
         onTap: onTap,
         child: Column(
@@ -273,82 +331,147 @@ class _EventCard extends StatelessWidget {
             if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
               Image.network(
                 event.imageUrl!,
-                height: 140,
+                height: 150,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   height: 100,
-                  color: Colors.grey.shade200,
-                  child: const Center(child: Icon(Icons.image)),
+                  color: AppTheme.secondaryColor,
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_not_supported_rounded,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Chip(
-                        label: Text(
-                          event.category,
-                          style: const TextStyle(fontSize: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
-                        padding: EdgeInsets.zero,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        decoration: BoxDecoration(
+                          color: AppTheme.secondaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          event.category,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
                       ),
                       if (isOrganizer) ...[
                         const SizedBox(width: 8),
-                        Chip(
-                          avatar: const Icon(Icons.star, size: 12, color: Colors.amber),
-                          label: const Text('My Event',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          backgroundColor: Colors.amber.shade50,
-                          padding: EdgeInsets.zero,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                size: 12,
+                                color: Colors.amber,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'My Event',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.amber,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                       const Spacer(),
                       StreamBuilder<int>(
                         stream: repository.watchAttendeeCount(event.id),
-                        initialData: event.attendeeCount > 0 ? event.attendeeCount : event.attendeeIds.length,
+                        initialData: event.attendeeCount > 0
+                            ? event.attendeeCount
+                            : event.attendeeIds.length,
                         builder: (context, countSnapshot) {
-                          final count = countSnapshot.data ??
+                          final count =
+                              countSnapshot.data ??
                               (event.attendeeCount > 0
                                   ? event.attendeeCount
                                   : event.attendeeIds.length);
-                          return Row(
-                            children: [
-                              const Icon(Icons.people_outline, size: 16),
-                              const SizedBox(width: 4),
-                              Text('$count', style: theme.textTheme.bodySmall),
-                            ],
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBackground,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.people_alt_rounded,
+                                  size: 14,
+                                  color: AppTheme.primaryColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$count attending',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
                         },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     event.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: const TextStyle(
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
 
                   // Organizer Name Badge
                   Row(
                     children: [
-                      Icon(Icons.person_outline,
-                          size: 16, color: theme.colorScheme.primary),
-                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.person_rounded,
+                        size: 16,
+                        color: AppTheme.primaryColor,
+                      ),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Organized by ${event.organizerName.isNotEmpty ? event.organizerName : 'Campus Admin'}',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          'Organized by ${event.organizerName.isNotEmpty ? event.organizerName : 'Campus Student'}',
+                          style: const TextStyle(
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
+                            color: AppTheme.primaryColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -361,32 +484,42 @@ class _EventCard extends StatelessWidget {
                   // Location
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.location_on_rounded,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           event.locationName,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: Colors.grey.shade700),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
 
                   // Date Time
                   Row(
                     children: [
-                      const Icon(Icons.calendar_month_outlined,
-                          size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.calendar_month_rounded,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 6),
                       Text(
                         event.dateTime.toString().split('.')[0],
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey.shade700),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ],
                   ),

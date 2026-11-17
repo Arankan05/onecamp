@@ -1,15 +1,9 @@
-
 import 'package:flutter/foundation.dart';
 
 import '../models/user_profile.dart';
 import '../repositories/profile_repository.dart';
 
-enum ProfileStatus {
-  initial,
-  loading,
-  success,
-  error,
-}
+enum ProfileStatus { initial, loading, success, error }
 
 class ProfileController extends ChangeNotifier {
   final ProfileRepository _profileRepository;
@@ -18,10 +12,8 @@ class ProfileController extends ChangeNotifier {
   UserProfile? _profile;
   String? _errorMessage;
 
-  ProfileController({
-    ProfileRepository? profileRepository,
-  }) : _profileRepository =
-      profileRepository ?? ProfileRepository();
+  ProfileController({ProfileRepository? profileRepository})
+    : _profileRepository = profileRepository ?? ProfileRepository();
 
   ProfileStatus get status => _status;
   UserProfile? get profile => _profile;

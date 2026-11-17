@@ -19,8 +19,8 @@ class EventController extends ChangeNotifier {
   EventController({
     EventRepository? eventRepository,
     LocationService? locationService,
-  })  : _eventRepository = eventRepository ?? EventRepository(),
-        _locationService = locationService ?? LocationService();
+  }) : _eventRepository = eventRepository ?? EventRepository(),
+       _locationService = locationService ?? LocationService();
 
   // ---------- Form Fields ----------
   String _title = '';
@@ -204,28 +204,25 @@ class EventController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final position =
-          await _locationService.getCurrentPosition(timeout: timeout);
+      final position = await _locationService.getCurrentPosition(
+        timeout: timeout,
+      );
       _latitude = position.latitude;
       _longitude = position.longitude;
       _lastRetrievedPosition = position;
       _locationErrorMessage = null;
       return true;
     } on LocationServiceDisabledException {
-      _locationErrorMessage =
-          'Location services are disabled on this device. Please enable GPS in your device settings.';
+      _locationErrorMessage = 'Location services are disabled on this device. Please enable GPS in your device settings.';
       return false;
     } on LocationPermissionDeniedException {
-      _locationErrorMessage =
-          'Location permission was denied. Please grant location access to use your current location.';
+      _locationErrorMessage = 'Location permission was denied. Please grant location access to use your current location.';
       return false;
     } on LocationPermissionPermanentlyDeniedException {
-      _locationErrorMessage =
-          'Location permission is permanently denied. Please enable location permissions in App Settings.';
+      _locationErrorMessage = 'Location permission is permanently denied. Please enable location permissions in App Settings.';
       return false;
     } on LocationTimeoutException {
-      _locationErrorMessage =
-          'Location request timed out. Please check GPS reception and try again.';
+      _locationErrorMessage = 'Location request timed out. Please check GPS reception and try again.';
       return false;
     } on LocationException catch (e) {
       _locationErrorMessage = e.message;
@@ -292,7 +289,8 @@ class EventController extends ChangeNotifier {
       try {
         currentUser = FirebaseAuth.instance.currentUser;
       } catch (_) {}
-      final orgId = _organizerId ??
+      final orgId =
+          _organizerId ??
           fallbackOrganizerId ??
           currentUser?.uid ??
           _eventRepository.currentUserId ??
@@ -312,7 +310,8 @@ class EventController extends ChangeNotifier {
       }
 
       if (orgName.isEmpty) {
-        orgName = currentUser?.displayName ??
+        orgName =
+            currentUser?.displayName ??
             currentUser?.email?.split('@')[0] ??
             'Organizer';
       }
@@ -322,11 +321,11 @@ class EventController extends ChangeNotifier {
       }
 
       if (isEditing) {
-        final existingEvent =
-            await _eventRepository.getEvent(_editingEventId!);
+        final existingEvent = await _eventRepository.getEvent(_editingEventId!);
         if (existingEvent == null) {
           throw StateError(
-              'Cannot update event: Event with ID $_editingEventId does not exist.');
+            'Cannot update event: Event with ID $_editingEventId does not exist.',
+          );
         }
 
         final shouldClearCoordinates =

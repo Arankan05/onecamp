@@ -1,4 +1,3 @@
-
 import '../models/comment_model.dart';
 import '../repositories/comment_repository.dart';
 
@@ -6,7 +5,7 @@ class CommentController {
   final CommentRepository _repository;
 
   CommentController({CommentRepository? repository})
-      : _repository = repository ?? CommentRepository();
+    : _repository = repository ?? CommentRepository();
 
   // Get comments for a post
   Stream<List<CommentModel>> getComments(String postId) {
@@ -44,9 +43,6 @@ class CommentController {
     required String postId,
     required String commentId,
   }) async {
-    await _repository.deleteComment(
-      postId: postId,
-      commentId: commentId,
-    );
+    await _repository.deleteComment(postId: postId, commentId: commentId);
   }
 }

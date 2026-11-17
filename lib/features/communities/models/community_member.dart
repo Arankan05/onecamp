@@ -22,9 +22,6 @@ class CommunityMember {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'role': role,
-      'joinedAt': Timestamp.fromDate(joinedAt),
-    };
+    return {'role': role, 'joinedAt': Timestamp.fromDate(joinedAt)};
   }
 }

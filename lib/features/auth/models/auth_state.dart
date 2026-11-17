@@ -1,19 +1,10 @@
-
-enum AuthStatus {
-  initial,
-  loading,
-  success,
-  error,
-}
+enum AuthStatus { initial, loading, success, error }
 
 class AuthState {
   final AuthStatus status;
   final String? errorMessage;
 
-  const AuthState({
-    this.status = AuthStatus.initial,
-    this.errorMessage,
-  });
+  const AuthState({this.status = AuthStatus.initial, this.errorMessage});
 
   // Initial state
   factory AuthState.initial() {
@@ -32,9 +23,6 @@ class AuthState {
 
   // Error state
   factory AuthState.error(String message) {
-    return AuthState(
-      status: AuthStatus.error,
-      errorMessage: message,
-    );
+    return AuthState(status: AuthStatus.error, errorMessage: message);
   }
 }

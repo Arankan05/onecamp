@@ -1,24 +1,21 @@
-
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../controllers/feed_controller.dart';
 import '../models/post_model.dart';
 
 class EditPostScreen extends StatefulWidget {
   final PostModel post;
 
-  const EditPostScreen({
-    super.key,
-    required this.post,
-  });
+  const EditPostScreen({super.key, required this.post});
 
   @override
   State<EditPostScreen> createState() => _EditPostScreenState();
 }
 
 class _EditPostScreenState extends State<EditPostScreen> {
-  final TextEditingController _contentController =
-  TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
 
   late final FeedController _controller;
   bool _isLoading = false;
@@ -44,9 +41,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post content cannot be empty'),
-        ),
+        const SnackBar(content: Text('Post content cannot be empty')),
       );
       return;
     }
@@ -56,28 +51,20 @@ class _EditPostScreenState extends State<EditPostScreen> {
     });
 
     try {
-      await _controller.updatePost(
-        postId: widget.post.id,
-        content: content,
-      );
+      await _controller.updatePost(postId: widget.post.id, content: content);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post updated successfully'),
-        ),
+        const SnackBar(content: Text('Post updated successfully')),
       );
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to update post: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Unable to update post: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -90,8 +77,12 @@ class _EditPostScreenState extends State<EditPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Edit Post'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
       ),
 
       body: Padding(

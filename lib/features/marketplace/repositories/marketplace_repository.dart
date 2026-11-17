@@ -143,31 +143,49 @@ class MarketplaceRepository {
 
   /// Stream of available marketplace listings with optional category filtering.
   Stream<List<MarketplaceItem>> getAvailableItemsStream({String? category}) {
-    Query<Map<String, dynamic>> query = _marketplaceRef.where(
-      'status',
-      isEqualTo: AppConstants.statusAvailable,
-    );
-
-    if (category != null && category.isNotEmpty && category != 'All') {
-      query = query.where('category', isEqualTo: category);
-    }
-
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs
+    return _marketplaceRef.snapshots().map((snapshot) {
+      final items = snapshot.docs
           .map((doc) => MarketplaceItem.fromDocument(doc))
+          .where((item) => item.isAvailable || item.status.isEmpty)
           .toList();
+
+      if (category != null && category.isNotEmpty && category != 'All') {
+        final filtered = items.where((i) => i.category == category).toList();
+        filtered.sort((a, b) {
+          final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bTime.compareTo(aTime);
+        });
+        return filtered;
+      }
+
+      items.sort((a, b) {
+        final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bTime.compareTo(aTime);
+      });
+
+      return items;
     });
   }
 
   /// Stream of marketplace listings posted by a specific seller (or current user if omitted).
   Stream<List<MarketplaceItem>> getSellerItemsStream({String? sellerId}) {
     final targetUid = sellerId ?? _currentUserId;
-    final query = _marketplaceRef.where('sellerId', isEqualTo: targetUid);
 
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs
+    return _marketplaceRef.snapshots().map((snapshot) {
+      final items = snapshot.docs
           .map((doc) => MarketplaceItem.fromDocument(doc))
+          .where((item) => item.sellerId == targetUid)
           .toList();
+
+      items.sort((a, b) {
+        final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bTime.compareTo(aTime);
+      });
+
+      return items;
     });
   }
 }

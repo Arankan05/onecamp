@@ -1,10 +1,14 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
+import '../../profile/models/user_profile.dart';
 import '../controllers/feed_controller.dart';
+import '../repositories/user_repository.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -15,14 +19,29 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
-
   final FeedController _feedController = FeedController();
-
+  final UserRepository _userRepository = UserRepository();
   final ImagePicker _imagePicker = ImagePicker();
 
   File? _selectedImage;
-
   bool _isLoading = false;
+  UserProfile? _currentUserProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final profile = await _userRepository.getUserById(user.uid);
+      if (mounted) {
+        setState(() => _currentUserProfile = profile);
+      }
+    }
+  }
 
   // Select image from gallery
   Future<void> _pickImage() async {
@@ -69,7 +88,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (content.isEmpty && _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please write something or select an image.'),
+          content: Text('Please write something or select an image to share.'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -93,7 +113,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     try {
       String? imageUrl;
 
-      // Upload image to Firebase Storage
+      // Upload image to Cloudinary storage
       if (_selectedImage != null) {
         imageUrl = await _feedController.uploadPostImage(
           image: _selectedImage!,
@@ -111,15 +131,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post published successfully!')),
+        const SnackBar(
+          content: Text('Post published successfully to campus feed!'),
+          backgroundColor: Colors.green,
+        ),
       );
 
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to publish post: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to publish post: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -137,118 +164,221 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authorName = _currentUserProfile?.name ?? 'Campus Student';
+    final avatarUrl = _currentUserProfile?.profileImageUrl;
+
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Create Post'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
         actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _publishPost,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Publish'),
+          Padding(
+            padding: const EdgeInsets.only(right: 12.0, top: 10, bottom: 10),
+            child: ElevatedButton.icon(
+              onPressed: _isLoading ? null : _publishPost,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.send_rounded, size: 16),
+              label: Text(_isLoading ? 'Publishing...' : 'Publish'),
+            ),
           ),
         ],
       ),
-
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-
-          child: Column(
-            children: [
-              // Student information
-              const Row(
-                children: [
-                  CircleAvatar(child: Icon(Icons.person)),
-                  SizedBox(width: 12),
-                  Text(
-                    'Share with OneCamp students',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Selected image preview
-              if (_selectedImage != null) ...[
-                Stack(
-                  alignment: Alignment.topRight,
+        child: Column(
+          children: [
+            if (_isLoading)
+              const LinearProgressIndicator(color: AppTheme.primaryColor),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        _selectedImage!,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
+                    // Authenticated Student Profile Card Header
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: AppTheme.secondaryColor,
+                            backgroundImage:
+                                avatarUrl != null && avatarUrl.isNotEmpty
+                                ? NetworkImage(avatarUrl)
+                                : null,
+                            child: avatarUrl == null || avatarUrl.isEmpty
+                                ? const Icon(
+                                    Icons.person,
+                                    color: AppTheme.primaryColor,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                authorName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF1F2937),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.secondaryColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  'Public Campus Feed',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
 
-                    IconButton(
-                      onPressed: _isLoading ? null : _removeImage,
-                      icon: const Icon(Icons.close),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
+                    const SizedBox(height: 16),
+
+                    // Post content text input field
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
                       ),
+                      child: TextField(
+                        controller: _contentController,
+                        maxLines: 8,
+                        minLines: 4,
+                        decoration: const InputDecoration(
+                          hintText: "What's on your mind? Share news, questions, or updates with campus...",
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Selected image preview container
+                    if (_selectedImage != null) ...[
+                      Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(
+                              _selectedImage!,
+                              width: double.infinity,
+                              height: 220,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: CircleAvatar(
+                              backgroundColor: Colors.black.withValues(
+                                alpha: 0.6,
+                              ),
+                              radius: 18,
+                              child: IconButton(
+                                onPressed: _isLoading ? null : _removeImage,
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Media Attachment Buttons (Camera & Gallery)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _pickImage,
+                            icon: const Icon(
+                              Icons.photo_library_rounded,
+                              color: Colors.green,
+                            ),
+                            label: const Text('Add Photo'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _takePhoto,
+                            icon: const Icon(
+                              Icons.camera_alt_rounded,
+                              color: Colors.blue,
+                            ),
+                            label: const Text('Take Camera'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 12),
-              ],
-
-              // Post text field
-              Expanded(
-                child: TextField(
-                  controller: _contentController,
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  decoration: const InputDecoration(
-                    hintText: "What's happening on campus?",
-                    border: InputBorder.none,
-                  ),
-                ),
               ),
-
-              const SizedBox(height: 12),
-
-              // Camera and Gallery buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _takePhoto,
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Camera'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _pickImage,
-                      icon: const Icon(Icons.image),
-                      label: const Text('Gallery'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

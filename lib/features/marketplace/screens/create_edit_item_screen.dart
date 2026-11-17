@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/onecamp_back_button.dart';
 import '../models/marketplace_item.dart';
 import '../repositories/marketplace_repository.dart';
 import '../services/cloudinary_service.dart';
@@ -114,12 +116,18 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library),
+              leading: const Icon(
+                Icons.photo_library,
+                color: AppTheme.primaryColor,
+              ),
               title: const Text('Choose from Gallery'),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera),
+              leading: const Icon(
+                Icons.photo_camera,
+                color: AppTheme.primaryColor,
+              ),
               title: const Text('Take a Photo'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
@@ -266,14 +274,17 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final categories = AppConstants.marketplaceCategories
         .where((c) => c != 'All')
         .toList();
 
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit Listing' : 'Post New Listing'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
       ),
       body: _isSubmitting
           ? const Center(
@@ -288,6 +299,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -314,7 +326,6 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Item Title *',
                         hintText: 'e.g. Engineering Calculus Textbook',
-                        border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -336,10 +347,9 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                         decimal: true,
                       ),
                       decoration: const InputDecoration(
-                        labelText: 'Price (LKR / Rs.) *',
-                        hintText: 'e.g. 1500 (Enter 0 for Free)',
-                        border: OutlineInputBorder(),
-                        prefixText: 'Rs. ',
+                        labelText: 'Price (\$) *',
+                        hintText: 'e.g. 25 (Enter 0 for Free)',
+                        prefixText: '\$ ',
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -363,7 +373,6 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                       initialValue: _selectedCategory,
                       decoration: const InputDecoration(
                         labelText: 'Category *',
-                        border: OutlineInputBorder(),
                       ),
                       items: categories
                           .map(
@@ -385,7 +394,6 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                       initialValue: _selectedCondition,
                       decoration: const InputDecoration(
                         labelText: 'Condition *',
-                        border: OutlineInputBorder(),
                       ),
                       items: AppConstants.itemConditions
                           .map(
@@ -411,7 +419,6 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Description *',
                         hintText: 'Provide details about condition, edition, usage, etc.',
-                        border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -429,7 +436,6 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Campus Location (Optional)',
                         hintText: 'e.g. Main Library / Student Union',
-                        border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.location_on_outlined),
                       ),
                     ),
@@ -439,13 +445,20 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                     // Submit Button
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
-                      child: FilledButton(
+                      height: 52,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
                         onPressed: _isSubmitting ? null : _submitForm,
                         child: Text(
                           widget.isEditing ? 'Save Changes' : 'Post Listing',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onPrimary,
+                          style: const TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

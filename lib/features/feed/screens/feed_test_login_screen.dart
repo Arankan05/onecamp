@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -8,12 +7,10 @@ class FeedTestLoginScreen extends StatefulWidget {
   const FeedTestLoginScreen({super.key});
 
   @override
-  State<FeedTestLoginScreen> createState() =>
-      _FeedTestLoginScreenState();
+  State<FeedTestLoginScreen> createState() => _FeedTestLoginScreenState();
 }
 
-class _FeedTestLoginScreenState
-    extends State<FeedTestLoginScreen> {
+class _FeedTestLoginScreenState extends State<FeedTestLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -32,16 +29,13 @@ class _FeedTestLoginScreenState
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => FeedScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => FeedScreen()),
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? e.code)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message ?? e.code)));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

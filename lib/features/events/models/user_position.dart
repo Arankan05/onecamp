@@ -82,4 +82,3 @@ class UserPosition {
   @override
   int get hashCode => Object.hash(latitude, longitude, timestamp);
 }
-

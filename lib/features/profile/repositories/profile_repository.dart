@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -7,9 +6,8 @@ import '../models/user_profile.dart';
 class ProfileRepository {
   final FirebaseFirestore _firestore;
 
-  ProfileRepository({
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  ProfileRepository({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Future<UserProfile?> getUserProfile(String uid) async {
     final document = await _firestore
@@ -52,10 +50,7 @@ class ProfileRepository {
     required List<String> skills,
     required List<String> interests,
   }) async {
-    await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(uid)
-        .set({
+    await _firestore.collection(AppConstants.usersCollection).doc(uid).set({
       'uid': uid,
       'role': 'student',
       'university': university.trim(),

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../controllers/feed_controller.dart';
 import '../models/post_model.dart';
+import '../repositories/user_repository.dart';
+import '../../profile/models/user_profile.dart';
+import '../../profile/screens/other_user_profile_screen.dart';
 import 'create_post_screen.dart';
 import 'comment_screen.dart';
 import 'edit_post_screen.dart';
@@ -18,6 +22,7 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   late final FeedController _controller;
+  final UserRepository _userRepository = UserRepository();
 
   bool _showFollowing = false;
 
@@ -41,24 +46,161 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
+  Widget _buildCreatePostComposerCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0C7952B8),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreatePostScreen(),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: lightLavender,
+                  child: const Icon(Icons.person, color: primaryPurple),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    "What's on your mind? Share with campus...",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryPurple,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Post',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreatePostScreen(),
+                    ),
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.photo_library_rounded,
+                      color: Colors.green,
+                      size: 20,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Photo',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: darkText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 16, color: borderLavender),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreatePostScreen(),
+                    ),
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.camera_alt_rounded,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Camera',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: darkText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundLavender,
 
       // Create Post button
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primaryPurple,
         foregroundColor: Colors.white,
         elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        icon: const Icon(Icons.add, size: 24),
+        label: const Text(
+          'Create Post',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const CreatePostScreen()),
           );
         },
-        child: const Icon(Icons.add, size: 30),
       ),
 
       // AppBar
@@ -66,6 +208,7 @@ class _FeedScreenState extends State<FeedScreen> {
         elevation: 0,
         backgroundColor: backgroundLavender,
         surfaceTintColor: Colors.transparent,
+        leading: Navigator.canPop(context) ? const OneCampBackButton() : null,
         title: const Text(
           'OneCamp',
           style: TextStyle(
@@ -93,9 +236,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
       body: Column(
         children: [
+          // Create Post Prominent Composer Box
+          _buildCreatePostComposerCard(),
+
           // All Posts / Following selector
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Container(
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
@@ -218,28 +364,27 @@ class _FeedScreenState extends State<FeedScreen> {
                 children: [
                   const Icon(
                     Icons.dynamic_feed_outlined,
-                    size: 65,
-                    color: primaryPurple,
+                    size: 60,
+                    color: Colors.grey,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     _showFollowing
                         ? 'No posts from followed students'
                         : 'No posts yet',
-                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: darkText,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     _showFollowing
                         ? 'Follow students to see their posts here!'
                         : 'Be the first to share something!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -248,7 +393,7 @@ class _FeedScreenState extends State<FeedScreen> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 90),
+          padding: const EdgeInsets.all(12),
           itemCount: posts.length,
           itemBuilder: (context, index) {
             return _buildPostCard(posts[index]);
@@ -263,14 +408,7 @@ class _FeedScreenState extends State<FeedScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      elevation: 2,
-      shadowColor: primaryPurple..withValues(alpha: 0.12),
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: borderLavender, width: 1),
-      ),
+      margin: const EdgeInsets.only(bottom: 16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _openPostDetails(post),
@@ -279,170 +417,199 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Post header
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 23,
-                    backgroundColor: lightLavender,
-                    child: Icon(Icons.person, color: primaryPurple, size: 26),
-                  ),
+              // Post header with real author profile lookup
+              FutureBuilder<UserProfile?>(
+                future: _userRepository.getUserById(post.authorId),
+                builder: (context, authorSnapshot) {
+                  final author = authorSnapshot.data;
+                  final authorName = author?.name ?? 'Campus Student';
+                  final avatarUrl = author?.profileImageUrl;
 
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: Text(
-                      'Student • ${post.authorId}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: darkText,
-                      ),
-                    ),
-                  ),
-
-                  // Post options
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz, color: primaryPurple),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onSelected: (value) async {
-                      if (value == 'copy') {
-                        await Clipboard.setData(
-                          ClipboardData(text: post.content),
-                        );
-
-                        if (!mounted) return;
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Post text copied')),
-                        );
-                      }
-
-                      if (value == 'edit') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditPostScreen(post: post),
-                          ),
-                        );
-                      }
-
-                      if (value == 'delete') {
-                        try {
-                          await _controller.deletePost(post.id);
-
-                          if (!mounted) return;
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Post deleted successfully'),
+                  return Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  OtherUserProfileScreen(userId: post.authorId),
                             ),
                           );
-                        } catch (e) {
-                          if (!mounted) return;
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Unable to delete post: $e'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem<String>(
-                        value: 'copy',
-                        child: Row(
-                          children: [
-                            Icon(Icons.copy, size: 19),
-                            SizedBox(width: 8),
-                            Text('Copy Post Text'),
-                          ],
+                        },
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: lightLavender,
+                          backgroundImage:
+                              avatarUrl != null && avatarUrl.isNotEmpty
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl == null || avatarUrl.isEmpty
+                              ? const Icon(Icons.person, color: primaryPurple)
+                              : null,
                         ),
                       ),
 
-                      if (user?.uid == post.authorId)
-                        const PopupMenuItem<String>(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit, size: 19),
-                              SizedBox(width: 8),
-                              Text('Edit Post'),
-                            ],
-                          ),
-                        ),
+                      const SizedBox(width: 10),
 
-                      if (user?.uid == post.authorId)
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => OtherUserProfileScreen(
+                                  userId: post.authorId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.delete, color: Colors.red, size: 19),
-                              SizedBox(width: 8),
-                              Text('Delete Post'),
+                              Text(
+                                authorName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: darkText,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'OneCamp Student',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
                             ],
                           ),
                         ),
+                      ),
+
+                      // Post options popup menu
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) async {
+                          if (value == 'copy') {
+                            await Clipboard.setData(
+                              ClipboardData(text: post.content),
+                            );
+
+                            if (!mounted) return;
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Post text copied')),
+                            );
+                          }
+
+                          if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    EditPostScreen(post: post),
+                              ),
+                            );
+                          }
+
+                          if (value == 'delete') {
+                            try {
+                              await _controller.deletePost(post.id);
+
+                              if (!mounted) return;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Post deleted successfully'),
+                                ),
+                              );
+                            } catch (e) {
+                              if (!mounted) return;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Unable to delete post: $e'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+
+                        itemBuilder: (context) => [
+                          const PopupMenuItem<String>(
+                            value: 'copy',
+                            child: Row(
+                              children: [
+                                Icon(Icons.copy),
+                                SizedBox(width: 8),
+                                Text('Copy Post Text'),
+                              ],
+                            ),
+                          ),
+
+                          if (user?.uid == post.authorId)
+                            const PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit),
+                                  SizedBox(width: 8),
+                                  Text('Edit Post'),
+                                ],
+                              ),
+                            ),
+
+                          if (user?.uid == post.authorId)
+                            const PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Delete Post'),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               // Post content
-              if (post.content.isNotEmpty)
-                Text(
-                  post.content,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.5,
-                    color: darkText,
-                  ),
-                ),
+              if (post.content.isNotEmpty) Text(post.content),
 
               // Post image
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
+
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(12),
                   child: Image.network(
                     post.imageUrl!,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 180,
-                        color: backgroundLavender,
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Unable to load image',
-                          style: TextStyle(color: primaryPurple),
-                        ),
-                      );
+                      return const Text('Unable to load image');
                     },
                   ),
                 ),
               ],
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               // Post date
               Text(
-                post.createdAt.toLocal().toString(),
+                post.createdAt.toLocal().toString().split('.')[0],
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
 
-              const SizedBox(height: 12),
-
-              const Divider(color: borderLavender, height: 1),
-
-              const SizedBox(height: 8),
+              const Divider(),
 
               // Like count and Like button
               StreamBuilder<int>(
@@ -465,11 +632,6 @@ class _FeedScreenState extends State<FeedScreen> {
                         children: [
                           // Like button
                           TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: isLiked
-                                  ? Colors.pink
-                                  : primaryPurple,
-                            ),
                             onPressed: user == null
                                 ? null
                                 : () async {
@@ -493,15 +655,13 @@ class _FeedScreenState extends State<FeedScreen> {
                                   },
                             icon: Icon(
                               isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: isLiked ? Colors.red : null,
                             ),
                             label: Text('Like ($likeCount)'),
                           ),
 
                           // Comment button
                           TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: primaryPurple,
-                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -511,7 +671,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.chat_bubble_outline),
+                            icon: const Icon(Icons.comment_outlined),
                             label: const Text('Comment'),
                           ),
                         ],
@@ -532,7 +692,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       'Tap post to view details',
                       style: TextStyle(color: primaryPurple, fontSize: 12),
                     ),
-                    SizedBox(width: 5),
+                    SizedBox(width: 4),
                     Icon(Icons.arrow_forward, size: 14, color: primaryPurple),
                   ],
                 ),

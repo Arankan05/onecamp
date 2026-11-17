@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../models/campus_update_model.dart';
 import '../repositories/campus_repository.dart';
 
@@ -27,8 +29,12 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Campus Updates'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
       ),
       body: StreamBuilder<List<CampusUpdateModel>>(
         stream: _repository.watchCampusUpdates(),
@@ -56,11 +62,17 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.campaign_outlined, size: 64, color: Colors.grey),
+                  const Icon(
+                    Icons.campaign_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'No official campus updates posted yet.',
-                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -83,7 +95,10 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
                         children: [
                           if (update.isUrgent)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade100,
@@ -108,7 +123,9 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
                           const Spacer(),
                           Text(
                             update.createdAt.toString().split(' ')[0],
-                            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -120,10 +137,7 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        update.body,
-                        style: theme.textTheme.bodyMedium,
-                      ),
+                      Text(update.body, style: theme.textTheme.bodyMedium),
                       if (update.authorName.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Text(

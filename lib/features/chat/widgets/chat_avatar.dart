@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/services/presence_service.dart';
 import '../theme/chat_colors.dart';
 import '../theme/chat_dimensions.dart';

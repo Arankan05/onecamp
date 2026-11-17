@@ -41,10 +41,7 @@ class _EventMapActionState extends State<EventMapAction> {
   static Future<bool> _defaultUrlLauncher(String url) async {
     final uri = Uri.parse(url);
     try {
-      return await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       return false;
     }

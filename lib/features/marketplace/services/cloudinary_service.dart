@@ -62,48 +62,48 @@ class CloudinaryService {
 
     final filename = xFile.name.isNotEmpty ? xFile.name : 'upload.jpg';
     final uri = Uri.parse(AppConstants.cloudinaryUploadUrl);
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = AppConstants.cloudinaryMarketplacePreset
-      ..fields['folder'] = AppConstants.cloudinaryMarketplaceFolder
-      ..files.add(
-        http.MultipartFile.fromBytes('file', bytes, filename: filename),
-      );
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final presetsToTry = [
+      AppConstants.cloudinaryMarketplacePreset,
+      'onecamp_chat_images',
+      'onecamp_event_images',
+    ];
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-      final secureUrl = jsonResponse['secure_url'] as String?;
+    String lastErrorMessage = 'Unknown upload error.';
 
-      if (secureUrl == null || secureUrl.trim().isEmpty) {
-        throw Exception(
-          'Cloudinary upload response did not contain a secure_url.',
-        );
+    for (final preset in presetsToTry) {
+      try {
+        final request = http.MultipartRequest('POST', uri)
+          ..fields['upload_preset'] = preset
+          ..fields['folder'] = AppConstants.cloudinaryMarketplaceFolder
+          ..files.add(
+            http.MultipartFile.fromBytes('file', bytes, filename: filename),
+          );
+
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final jsonResponse =
+              jsonDecode(response.body) as Map<String, dynamic>;
+          final secureUrl = jsonResponse['secure_url'] as String?;
+
+          if (secureUrl != null && secureUrl.trim().isNotEmpty) {
+            return secureUrl;
+          }
+        } else {
+          final Map<String, dynamic>? jsonResponse =
+              jsonDecode(response.body) as Map<String, dynamic>?;
+          lastErrorMessage =
+              jsonResponse?['error']?['message'] ??
+              'Status ${response.statusCode}';
+        }
+      } catch (e) {
+        lastErrorMessage = '$e';
       }
-
-      final parsedUri = Uri.tryParse(secureUrl);
-      final isValidHttpsUrl =
-          parsedUri != null &&
-          parsedUri.isAbsolute &&
-          parsedUri.scheme == 'https' &&
-          parsedUri.host.isNotEmpty;
-
-      if (!isValidHttpsUrl) {
-        throw Exception(
-          'Cloudinary upload response returned an invalid HTTPS URL: $secureUrl',
-        );
-      }
-
-      return secureUrl;
-    } else {
-      final Map<String, dynamic>? jsonResponse =
-          jsonDecode(response.body) as Map<String, dynamic>?;
-      final errorMessage =
-          jsonResponse?['error']?['message'] ??
-          'HTTP ${response.statusCode} upload error.';
-      throw Exception('Cloudinary upload failed: $errorMessage');
     }
+
+    throw Exception('Cloudinary upload failed: $lastErrorMessage');
   }
 
   /// Uploads a single image to Cloudinary using unsigned HTTP REST endpoint.
@@ -113,53 +113,7 @@ class CloudinaryService {
     }
 
     validateImageFile(imageFile);
-
-    try {
-      final uri = Uri.parse(AppConstants.cloudinaryUploadUrl);
-      final request = http.MultipartRequest('POST', uri)
-        ..fields['upload_preset'] = AppConstants.cloudinaryMarketplacePreset
-        ..fields['folder'] = AppConstants.cloudinaryMarketplaceFolder
-        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        final secureUrl = jsonResponse['secure_url'] as String?;
-
-        if (secureUrl == null || secureUrl.trim().isEmpty) {
-          throw Exception(
-            'Cloudinary upload response did not contain a secure_url.',
-          );
-        }
-
-        final parsedUri = Uri.tryParse(secureUrl);
-        final isValidHttpsUrl =
-            parsedUri != null &&
-            parsedUri.isAbsolute &&
-            parsedUri.scheme == 'https' &&
-            parsedUri.host.isNotEmpty;
-
-        if (!isValidHttpsUrl) {
-          throw Exception(
-            'Cloudinary upload response returned an invalid HTTPS URL: $secureUrl',
-          );
-        }
-
-        return secureUrl;
-      } else {
-        final Map<String, dynamic>? jsonResponse =
-            jsonDecode(response.body) as Map<String, dynamic>?;
-        final errorMessage =
-            jsonResponse?['error']?['message'] ??
-            'HTTP ${response.statusCode} upload error.';
-        throw Exception('Cloudinary upload failed: $errorMessage');
-      }
-    } catch (e) {
-      if (e is Exception) rethrow;
-      throw Exception('Failed to upload image to Cloudinary: $e');
-    }
+    return uploadXFile(XFile(imageFile.path));
   }
 
   /// Uploads a list of [XFile]s sequentially and returns their secure HTTPS URLs.

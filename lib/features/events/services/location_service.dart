@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:geolocator/geolocator.dart'
     hide LocationServiceDisabledException;
+
 import '../models/user_position.dart';
 
 /// Normalized location permission statuses.
@@ -38,8 +40,7 @@ class LocationPermissionDeniedException extends LocationException {
 /// Thrown when location permission is permanently denied (requires OS App Settings).
 class LocationPermissionPermanentlyDeniedException extends LocationException {
   const LocationPermissionPermanentlyDeniedException([
-    super.message =
-        'Location permission is permanently denied. Please enable it in Settings.',
+    super.message = 'Location permission is permanently denied. Please enable it in Settings.',
   ]);
 }
 
@@ -75,8 +76,7 @@ class GeolocatorPlatformWrapper implements LocationPlatform {
       Geolocator.isLocationServiceEnabled();
 
   @override
-  Future<LocationPermission> checkPermission() =>
-      Geolocator.checkPermission();
+  Future<LocationPermission> checkPermission() => Geolocator.checkPermission();
 
   @override
   Future<LocationPermission> requestPermission() =>
@@ -98,13 +98,12 @@ class GeolocatorPlatformWrapper implements LocationPlatform {
     double startLongitude,
     double endLatitude,
     double endLongitude,
-  ) =>
-      Geolocator.distanceBetween(
-        startLatitude,
-        startLongitude,
-        endLatitude,
-        endLongitude,
-      );
+  ) => Geolocator.distanceBetween(
+    startLatitude,
+    startLongitude,
+    endLatitude,
+    endLongitude,
+  );
 }
 
 /// Reusable service handling device GPS coordinate retrieval and permission flows.
@@ -112,7 +111,7 @@ class LocationService {
   final LocationPlatform _platform;
 
   LocationService({LocationPlatform? platform})
-      : _platform = platform ?? const GeolocatorPlatformWrapper();
+    : _platform = platform ?? const GeolocatorPlatformWrapper();
 
   /// Checks whether hardware location services are enabled on the device.
   Future<bool> isLocationServiceEnabled() async {
@@ -192,7 +191,8 @@ class LocationService {
       );
     } on TimeoutException {
       throw LocationTimeoutException(
-          'Location request timed out after ${timeout.inSeconds} seconds.');
+        'Location request timed out after ${timeout.inSeconds} seconds.',
+      );
     } catch (e) {
       if (e is LocationException) rethrow;
       throw LocationException('Failed to retrieve location: $e');

@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import '../models/post_model.dart';
@@ -8,7 +7,7 @@ class FeedController {
   final FeedRepository _repository;
 
   FeedController({FeedRepository? repository})
-      : _repository = repository ?? FeedRepository();
+    : _repository = repository ?? FeedRepository();
 
   // Get all posts
   Stream<List<PostModel>> get postsStream {
@@ -38,10 +37,7 @@ class FeedController {
     required File image,
     required String authorId,
   }) async {
-    return await _repository.uploadPostImage(
-      image: image,
-      authorId: authorId,
-    );
+    return await _repository.uploadPostImage(image: image, authorId: authorId);
   }
 
   // Delete your own post
@@ -54,10 +50,7 @@ class FeedController {
     required String postId,
     required String content,
   }) async {
-    await _repository.updatePost(
-      postId: postId,
-      content: content,
-    );
+    await _repository.updatePost(postId: postId, content: content);
   }
 
   // Check whether a user liked a post
@@ -65,10 +58,7 @@ class FeedController {
     required String postId,
     required String userId,
   }) {
-    return _repository.isPostLikedByUser(
-      postId: postId,
-      userId: userId,
-    );
+    return _repository.isPostLikedByUser(postId: postId, userId: userId);
   }
 
   // Get total number of likes
@@ -81,9 +71,6 @@ class FeedController {
     required String postId,
     required String userId,
   }) async {
-    await _repository.toggleLike(
-      postId: postId,
-      userId: userId,
-    );
+    await _repository.toggleLike(postId: postId, userId: userId);
   }
 }

@@ -20,19 +20,22 @@ import '../features/events/models/event_model.dart';
 import '../features/events/screens/create_event_screen.dart';
 import '../features/events/screens/event_details_screen.dart';
 import '../features/events/screens/events_list_screen.dart';
+import '../features/feed/screens/feed_screen.dart';
+import '../features/feed/screens/student_list_screen.dart';
 import '../features/marketplace/models/marketplace_item.dart';
 import '../features/marketplace/screens/create_edit_item_screen.dart';
 import '../features/marketplace/screens/item_detail_screen.dart';
 import '../features/marketplace/screens/marketplace_browse_screen.dart';
+import '../features/notifications/screens/notification_screen.dart';
 import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
+import '../features/profile/screens/other_user_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../main.dart';
 
 class AppRoutes {
   static const String initial = '/';
   static const String mainNavigation = '/main';
-  static const String mainNav = '/main';
 
   // Auth & Profile routes
   static const String login = '/login';
@@ -41,9 +44,15 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
+  static const String otherProfile = '/user-profile';
+  static const String students = '/students';
   static const String communityList = '/communities';
   static const String communityDetails = '/community-details';
   static const String createCommunity = '/create-community';
+
+  // Social Feed & Notifications routes
+  static const String feed = '/feed';
+  static const String notifications = '/notifications';
 
   // Chat module routes
   static const String chatList = '/chat_list';
@@ -68,7 +77,9 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes {
     return {
       mainNavigation: (context) => const MainNavigationScreen(),
-      mainNav: (context) => const MainNavigationScreen(),
+      feed: (context) => const FeedScreen(),
+      notifications: (context) => const NotificationScreen(),
+      students: (context) => const StudentListScreen(),
       chatList: (context) => const ChatListScreen(),
       newChat: (context) => const NewChatScreen(),
       createGroup: (context) => const CreateGroupScreen(),
@@ -88,9 +99,26 @@ class AppRoutes {
         );
 
       case mainNavigation:
-      case mainNav:
         return MaterialPageRoute(
           builder: (_) => const MainNavigationScreen(),
+          settings: settings,
+        );
+
+      case feed:
+        return MaterialPageRoute(
+          builder: (_) => const FeedScreen(),
+          settings: settings,
+        );
+
+      case notifications:
+        return MaterialPageRoute(
+          builder: (_) => const NotificationScreen(),
+          settings: settings,
+        );
+
+      case students:
+        return MaterialPageRoute(
+          builder: (_) => const StudentListScreen(),
           settings: settings,
         );
 
@@ -148,6 +176,13 @@ class AppRoutes {
           settings: settings,
         );
 
+      case otherProfile:
+        final userId = settings.arguments as String? ?? '';
+        return MaterialPageRoute(
+          builder: (_) => OtherUserProfileScreen(userId: userId),
+          settings: settings,
+        );
+
       case communityList:
         return MaterialPageRoute(
           builder: (_) => const CommunityListScreen(),
@@ -159,8 +194,8 @@ class AppRoutes {
         final communityId = args is String
             ? args
             : (args is Map<String, dynamic>
-                ? args['communityId'] as String? ?? ''
-                : '');
+                  ? args['communityId'] as String? ?? ''
+                  : '');
         return MaterialPageRoute(
           builder: (_) => CommunityDetailsScreen(communityId: communityId),
           settings: settings,
@@ -198,7 +233,8 @@ class AppRoutes {
             title: args['title'] as String? ?? 'Chat',
             isGroup: args['isGroup'] as bool? ?? false,
             avatarUrl: args['avatarUrl'] as String?,
-            participantIds: (args['participantIds'] as List<dynamic>?)
+            participantIds:
+                (args['participantIds'] as List<dynamic>?)
                     ?.map((e) => e.toString())
                     .toList() ??
                 const [],
@@ -215,7 +251,8 @@ class AppRoutes {
             title: args['title'] as String? ?? 'Chat Info',
             isGroup: args['isGroup'] as bool? ?? false,
             avatarUrl: args['avatarUrl'] as String?,
-            participantIds: (args['participantIds'] as List<dynamic>?)
+            participantIds:
+                (args['participantIds'] as List<dynamic>?)
                     ?.map((e) => e.toString())
                     .toList() ??
                 const [],
@@ -301,11 +338,7 @@ class AppRoutes {
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
-            body: Center(
-              child: Text(
-                'No route defined for ${settings.name}',
-              ),
-            ),
+            body: Center(child: Text('No route defined for ${settings.name}')),
           ),
           settings: settings,
         );

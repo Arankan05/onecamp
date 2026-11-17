@@ -7,14 +7,13 @@ class UserRepository {
   final FirebaseFirestore _firestore;
 
   UserRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Get all registered students
   Stream<List<UserProfile>> getUsers() {
-    return _firestore
-        .collection(AppConstants.usersCollection)
-        .snapshots()
-        .map((snapshot) {
+    return _firestore.collection(AppConstants.usersCollection).snapshots().map((
+      snapshot,
+    ) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         final uid = doc.id;

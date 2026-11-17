@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'chat_colors.dart';
 import 'chat_dimensions.dart';
 
@@ -18,10 +19,7 @@ class ChatDecorations {
 
   static BoxDecoration senderBubbleDecoration = const BoxDecoration(
     gradient: LinearGradient(
-      colors: [
-        ChatColors.senderBubble,
-        ChatColors.senderBubbleGradientEnd,
-      ],
+      colors: [ChatColors.senderBubble, ChatColors.senderBubbleGradientEnd],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
@@ -60,10 +58,7 @@ class ChatDecorations {
   static InputDecoration inputDecoration(String hintText) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(
-        color: Color(0xFF77718A),
-        fontSize: 14.0,
-      ),
+      hintStyle: const TextStyle(color: Color(0xFF77718A), fontSize: 14.0),
       filled: true,
       fillColor: ChatColors.inputBackground,
       contentPadding: const EdgeInsets.symmetric(
@@ -76,7 +71,10 @@ class ChatDecorations {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(ChatDimensions.radiusXL),
-        borderSide: const BorderSide(color: ChatColors.primaryPurple, width: 1.5),
+        borderSide: const BorderSide(
+          color: ChatColors.primaryPurple,
+          width: 1.5,
+        ),
       ),
     );
   }

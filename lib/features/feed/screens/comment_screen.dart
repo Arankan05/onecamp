@@ -1,17 +1,18 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../controllers/comment_controller.dart';
 import '../models/comment_model.dart';
+import '../repositories/user_repository.dart';
+import '../../profile/models/user_profile.dart';
+import '../../profile/screens/other_user_profile_screen.dart';
 
 class CommentScreen extends StatefulWidget {
   final String postId;
 
-  const CommentScreen({
-    super.key,
-    required this.postId,
-  });
+  const CommentScreen({super.key, required this.postId});
 
   @override
   State<CommentScreen> createState() => _CommentScreenState();
@@ -19,8 +20,7 @@ class CommentScreen extends StatefulWidget {
 
 class _CommentScreenState extends State<CommentScreen> {
   final CommentController _controller = CommentController();
-  final TextEditingController _commentController =
-  TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
 
   bool _isSending = false;
   bool _isEditing = false;
@@ -55,15 +55,11 @@ class _CommentScreenState extends State<CommentScreen> {
       if (!mounted) return;
 
       _commentController.clear();
-
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to send comment: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Unable to send comment: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -95,9 +91,7 @@ class _CommentScreenState extends State<CommentScreen> {
   Future<void> _updateComment() async {
     final content = _commentController.text.trim();
 
-    if (content.isEmpty ||
-        _editingCommentId == null ||
-        _isSending) {
+    if (content.isEmpty || _editingCommentId == null || _isSending) {
       return;
     }
 
@@ -117,19 +111,14 @@ class _CommentScreenState extends State<CommentScreen> {
       _cancelEditing();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Comment updated successfully'),
-        ),
+        const SnackBar(content: Text('Comment updated successfully')),
       );
-
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to update comment: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to update comment: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -150,18 +139,14 @@ class _CommentScreenState extends State<CommentScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Comment deleted successfully'),
-        ),
+        const SnackBar(content: Text('Comment deleted successfully')),
       );
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Unable to delete comment: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to delete comment: $e')));
     }
   }
 
@@ -170,8 +155,12 @@ class _CommentScreenState extends State<CommentScreen> {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('Comments'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
       ),
 
       body: Column(
@@ -190,11 +179,8 @@ class _CommentScreenState extends State<CommentScreen> {
                   );
                 }
 
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 final comments = snapshot.data ?? [];
@@ -213,42 +199,100 @@ class _CommentScreenState extends State<CommentScreen> {
                   itemCount: comments.length,
                   itemBuilder: (context, index) {
                     final comment = comments[index];
-
-                    final isMyComment =
-                        comment.authorId == currentUser?.uid;
+                    final isMyComment = comment.authorId == currentUser?.uid;
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
-                        leading: const CircleAvatar(
-                          child: Icon(Icons.person),
+                        leading: FutureBuilder<UserProfile?>(
+                          future: UserRepository().getUserById(
+                            comment.authorId,
+                          ),
+                          builder: (context, commentAuthorSnapshot) {
+                            final cAuthor = commentAuthorSnapshot.data;
+                            final avatarUrl = cAuthor?.profileImageUrl;
+
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OtherUserProfileScreen(
+                                      userId: comment.authorId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: AppTheme.secondaryColor,
+                                backgroundImage:
+                                    avatarUrl != null && avatarUrl.isNotEmpty
+                                    ? NetworkImage(avatarUrl)
+                                    : null,
+                                child: avatarUrl == null || avatarUrl.isEmpty
+                                    ? const Icon(
+                                        Icons.person_rounded,
+                                        color: AppTheme.primaryColor,
+                                        size: 20,
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
                         ),
 
-                        title: Text(
-                          'Student • ${comment.authorId}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                        title: FutureBuilder<UserProfile?>(
+                          future: UserRepository().getUserById(
+                            comment.authorId,
                           ),
+                          builder: (context, commentAuthorSnapshot) {
+                            final cAuthor = commentAuthorSnapshot.data;
+                            final cAuthorName =
+                                cAuthor?.name ?? 'Campus Student';
+
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OtherUserProfileScreen(
+                                      userId: comment.authorId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                cAuthorName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Color(0xFF1F2937),
+                                ),
+                              ),
+                            );
+                          },
                         ),
 
                         subtitle: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 6),
-
-                            Text(comment.content),
-
-                            const SizedBox(height: 5),
-
+                            const SizedBox(height: 4),
                             Text(
-                              comment.createdAt
-                                  .toLocal()
-                                  .toString(),
+                              comment.content,
                               style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
+                                fontSize: 13,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              comment.createdAt.toLocal().toString().split(
+                                '.',
+                              )[0],
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
                               ),
                             ),
                           ],
@@ -257,31 +301,31 @@ class _CommentScreenState extends State<CommentScreen> {
                         // Edit and Delete buttons
                         trailing: isMyComment
                             ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Edit comment',
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                color: Colors.deepPurple,
-                              ),
-                              onPressed: () {
-                                _startEditing(comment);
-                              },
-                            ),
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Edit comment',
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      color: Colors.deepPurple,
+                                    ),
+                                    onPressed: () {
+                                      _startEditing(comment);
+                                    },
+                                  ),
 
-                            IconButton(
-                              tooltip: 'Delete comment',
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                              ),
-                              onPressed: () {
-                                _deleteComment(comment.id);
-                              },
-                            ),
-                          ],
-                        )
+                                  IconButton(
+                                    tooltip: 'Delete comment',
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      _deleteComment(comment.id);
+                                    },
+                                  ),
+                                ],
+                              )
                             : null,
                       ),
                     );
@@ -314,9 +358,7 @@ class _CommentScreenState extends State<CommentScreen> {
                           ),
 
                           TextButton(
-                            onPressed: _isSending
-                                ? null
-                                : _cancelEditing,
+                            onPressed: _isSending ? null : _cancelEditing,
                             child: const Text('Cancel'),
                           ),
                         ],
@@ -335,11 +377,9 @@ class _CommentScreenState extends State<CommentScreen> {
                                 ? 'Edit your comment...'
                                 : 'Write a comment...',
                             border: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(25),
+                              borderRadius: BorderRadius.circular(25),
                             ),
-                            contentPadding:
-                            const EdgeInsets.symmetric(
+                            contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
                             ),
@@ -352,23 +392,19 @@ class _CommentScreenState extends State<CommentScreen> {
                       IconButton(
                         onPressed: _isSending
                             ? null
-                            : (_isEditing
-                            ? _updateComment
-                            : _sendComment),
+                            : (_isEditing ? _updateComment : _sendComment),
                         icon: _isSending
                             ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : Icon(
-                          _isEditing
-                              ? Icons.check
-                              : Icons.send,
-                          color: Colors.deepPurple,
-                        ),
+                                _isEditing ? Icons.check : Icons.send,
+                                color: Colors.deepPurple,
+                              ),
                       ),
                     ],
                   ),

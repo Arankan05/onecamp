@@ -103,4 +103,3 @@ class EventAttendeeModel {
   @override
   int get hashCode => Object.hash(id, eventId);
 }
-

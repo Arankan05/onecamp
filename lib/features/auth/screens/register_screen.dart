@@ -51,20 +51,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Registration successful! Please complete your profile.'),
+          content: Text(
+            'Registration successful! Please complete your profile.',
+          ),
         ),
       );
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/',
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _authController.state.errorMessage ??
-                'Registration failed.',
+            _authController.state.errorMessage ?? 'Registration failed.',
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
@@ -77,14 +74,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: AnimatedBuilder(
         animation: _authController,
         builder: (context, child) {
-          final isLoading =
-              _authController.state.status == AuthStatus.loading;
+          final isLoading = _authController.state.status == AuthStatus.loading;
 
           return ResponsiveFormContainer(
             child: Form(
@@ -120,19 +114,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const Text(
                     'Join OneCamp',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Create your student account',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
 
@@ -165,9 +153,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return 'Please enter your email.';
                       }
 
-                      if (!RegExp(
-                        r'^[^@]+@[^@]+\.[^@]+$',
-                      ).hasMatch(value.trim())) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
+                          .hasMatch(value.trim())) {
                         return 'Please enter a valid email.';
                       }
 

@@ -22,10 +22,7 @@ void main() async {
 class OneCampApp extends StatelessWidget {
   final Widget? homeOverride;
 
-  const OneCampApp({
-    super.key,
-    this.homeOverride,
-  });
+  const OneCampApp({super.key, this.homeOverride});
 
   @override
   Widget build(BuildContext context) {
@@ -50,16 +47,12 @@ class AuthGate extends StatelessWidget {
     try {
       if (Firebase.apps.isEmpty) {
         return const Scaffold(
-          body: Center(
-            child: Text('OneCamp Initializing...'),
-          ),
+          body: Center(child: Text('OneCamp Initializing...')),
         );
       }
     } catch (_) {
       return const Scaffold(
-        body: Center(
-          child: Text('OneCamp Initializing...'),
-        ),
+        body: Center(child: Text('OneCamp Initializing...')),
       );
     }
 
@@ -67,11 +60,7 @@ class AuthGate extends StatelessWidget {
     try {
       authStream = FirebaseAuth.instance.authStateChanges();
     } catch (_) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return StreamBuilder<User?>(
@@ -79,9 +68,7 @@ class AuthGate extends StatelessWidget {
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -97,12 +84,9 @@ class AuthGate extends StatelessWidget {
                 .doc(user.uid)
                 .snapshots(),
             builder: (context, profileSnapshot) {
-              if (profileSnapshot.connectionState ==
-                  ConnectionState.waiting) {
+              if (profileSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  body: Center(child: CircularProgressIndicator()),
                 );
               }
 

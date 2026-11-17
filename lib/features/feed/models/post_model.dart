@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostModel {
@@ -17,10 +16,7 @@ class PostModel {
   });
 
   // Convert Firestore data into a PostModel object
-  factory PostModel.fromMap(
-      String id,
-      Map<String, dynamic> data,
-      ) {
+  factory PostModel.fromMap(String id, Map<String, dynamic> data) {
     return PostModel(
       id: id,
       authorId: data['authorId'] ?? '',

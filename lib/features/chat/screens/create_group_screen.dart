@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../repositories/chat_repository.dart';
 import '../theme/chat_colors.dart';
 import '../theme/chat_decorations.dart';
 import '../theme/chat_dimensions.dart';
 import '../theme/chat_text_styles.dart';
 import '../widgets/chat_avatar.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../../../routes/app_routes.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   final ChatRepository? chatRepository;
 
-  const CreateGroupScreen({
-    super.key,
-    this.chatRepository,
-  });
+  const CreateGroupScreen({super.key, this.chatRepository});
 
   @override
   State<CreateGroupScreen> createState() => _CreateGroupScreenState();
@@ -42,7 +41,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   Future<void> _handleCreateGroup() async {
-    final currentUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final currentUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     final groupName = _groupNameController.text.trim();
 
     if (currentUid == null || currentUid.isEmpty) {
@@ -68,7 +68,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     if (_selectedUserIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select at least one other student for the group.'),
+          content: Text(
+            'Please select at least one other student for the group.',
+          ),
           backgroundColor: Colors.orangeAccent,
         ),
       );
@@ -115,9 +117,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     return Scaffold(
       backgroundColor: ChatColors.pageBackground,
       appBar: AppBar(
-        title: const Text('Create Group Chat', style: ChatTextStyles.appBarTitle),
+        title: const Text(
+          'Create Group Chat',
+          style: ChatTextStyles.appBarTitle,
+        ),
         backgroundColor: ChatColors.cardBackground,
         elevation: 0,
+        leading: const OneCampBackButton(),
         actions: [
           TextButton(
             onPressed: _isCreating ? null : _handleCreateGroup,
@@ -144,29 +150,50 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   children: [
                     TextField(
                       controller: _groupNameController,
-                      style: const TextStyle(color: Color(0xFF29213F), fontSize: 14.0, fontWeight: FontWeight.w500),
-                      cursorColor: const Color(0xFF7138D8),
-                      decoration: ChatDecorations.inputDecoration('Enter group name...').copyWith(
-                        prefixIcon: const Icon(Icons.group_outlined, color: ChatColors.primaryPurple),
+                      style: const TextStyle(
+                        color: Color(0xFF29213F),
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
                       ),
+                      cursorColor: const Color(0xFF7138D8),
+                      decoration:
+                          ChatDecorations.inputDecoration('Enter group name...')
+                              .copyWith(
+                                prefixIcon: const Icon(
+                                  Icons.group_outlined,
+                                  color: ChatColors.primaryPurple,
+                                ),
+                              ),
                     ),
                     const SizedBox(height: ChatDimensions.paddingM),
                     TextField(
                       controller: _searchController,
-                      style: const TextStyle(color: Color(0xFF29213F), fontSize: 14.0, fontWeight: FontWeight.w500),
-                      cursorColor: const Color(0xFF7138D8),
-                      decoration: ChatDecorations.inputDecoration('Search members...').copyWith(
-                        prefixIcon: const Icon(Icons.search, color: ChatColors.textLight),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, color: ChatColors.textLight),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
+                      style: const TextStyle(
+                        color: Color(0xFF29213F),
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
                       ),
+                      cursorColor: const Color(0xFF7138D8),
+                      decoration:
+                          ChatDecorations.inputDecoration('Search members...')
+                              .copyWith(
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  color: ChatColors.textLight,
+                                ),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(
+                                          Icons.clear,
+                                          color: ChatColors.textLight,
+                                        ),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          setState(() => _searchQuery = '');
+                                        },
+                                      )
+                                    : null,
+                              ),
                       onChanged: (val) {
                         setState(() => _searchQuery = val.trim().toLowerCase());
                       },
@@ -201,14 +228,18 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
-                        child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                        child: CircularProgressIndicator(
+                          color: ChatColors.primaryPurple,
+                        ),
                       );
                     }
 
                     if (snapshot.hasError) {
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(ChatDimensions.paddingXL),
+                          padding: const EdgeInsets.all(
+                            ChatDimensions.paddingXL,
+                          ),
                           child: Text(
                             'Error loading members: ${snapshot.error}',
                             style: ChatTextStyles.chatTileSubtitle,
@@ -220,9 +251,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     final users = snapshot.data ?? [];
                     final filteredUsers = users.where((u) {
                       if (_searchQuery.isEmpty) return true;
-                      final name = (u['name'] as String? ?? u['displayName'] as String? ?? '').toLowerCase();
+                      final name =
+                          (u['name'] as String? ??
+                                  u['displayName'] as String? ??
+                                  '')
+                              .toLowerCase();
                       final email = (u['email'] as String? ?? '').toLowerCase();
-                      return name.contains(_searchQuery) || email.contains(_searchQuery);
+                      return name.contains(_searchQuery) ||
+                          email.contains(_searchQuery);
                     }).toList();
 
                     if (filteredUsers.isEmpty) {
@@ -237,17 +273,22 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     }
 
                     return ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: ChatDimensions.paddingS),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: ChatDimensions.paddingS,
+                      ),
                       itemCount: filteredUsers.length,
                       itemBuilder: (context, index) {
                         final user = filteredUsers[index];
                         final uid = user['uid'] as String? ?? '';
-                        final name = user['name'] as String? ??
+                        final name =
+                            user['name'] as String? ??
                             user['displayName'] as String? ??
                             user['email'] as String? ??
                             'Student';
                         final email = user['email'] as String? ?? '';
-                        final photoUrl = user['photoUrl'] as String? ?? user['avatarUrl'] as String?;
+                        final photoUrl =
+                            user['photoUrl'] as String? ??
+                            user['avatarUrl'] as String?;
                         final isSelected = _selectedUserIds.contains(uid);
 
                         return Container(
@@ -273,7 +314,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               imageUrl: photoUrl,
                               size: ChatDimensions.avatarMedium,
                             ),
-                            title: Text(name, style: ChatTextStyles.chatTileTitle),
+                            title: Text(
+                              name,
+                              style: ChatTextStyles.chatTileTitle,
+                            ),
                             subtitle: Text(
                               email,
                               style: ChatTextStyles.chatTileSubtitle,
@@ -293,7 +337,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             Container(
               color: Colors.black26,
               child: const Center(
-                child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                child: CircularProgressIndicator(
+                  color: ChatColors.primaryPurple,
+                ),
               ),
             ),
         ],

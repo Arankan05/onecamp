@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'screens/feed_test_login_screen.dart';
@@ -13,10 +12,7 @@ class FeedTestApp extends StatelessWidget {
       title: 'OneCamp Feed Test',
       debugShowCheckedModeBanner: false,
 
-      routes: {
-        '/students': (context) =>
-        const StudentListScreen(),
-      },
+      routes: {'/students': (context) => const StudentListScreen()},
 
       home: const FeedTestLoginScreen(),
     );

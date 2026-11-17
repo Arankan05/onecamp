@@ -23,8 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _skillsController = TextEditingController();
   final _interestsController = TextEditingController();
 
-  final OnboardingController _onboardingController =
-      OnboardingController();
+  final OnboardingController _onboardingController = OnboardingController();
 
   int? _academicYear;
   bool _isSaving = false;
@@ -61,15 +60,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Session expired. Please log in again.'),
-        ),
+        const SnackBar(content: Text('Session expired. Please log in again.')),
       );
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/',
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       return;
     }
 
@@ -93,16 +86,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile completed successfully!'),
-        ),
+        const SnackBar(content: Text('Profile completed successfully!')),
       );
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/',
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -119,11 +106,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   @override
@@ -167,19 +150,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const Text(
                 'Welcome to OneCamp! 🎓',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 'Please complete your student profile to get started.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 32),
 

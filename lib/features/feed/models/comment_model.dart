@@ -13,10 +13,7 @@ class CommentModel {
     required this.createdAt,
   });
 
-  factory CommentModel.fromMap(
-      String id,
-      Map<String, dynamic> data,
-      ) {
+  factory CommentModel.fromMap(String id, Map<String, dynamic> data) {
     return CommentModel(
       id: id,
       authorId: data['authorId'] ?? '',

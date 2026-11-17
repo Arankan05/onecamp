@@ -71,8 +71,10 @@ class _PostsTabState extends State<PostsTab> {
               final posts = snapshot.data ?? [];
               if (posts.isEmpty) {
                 return const Center(
-                  child: Text('No posts yet.\nStart the discussion!',
-                      textAlign: TextAlign.center),
+                  child: Text(
+                    'No posts yet.\nStart the discussion!',
+                    textAlign: TextAlign.center,
+                  ),
                 );
               }
               return ListView.builder(
@@ -80,8 +82,10 @@ class _PostsTabState extends State<PostsTab> {
                 itemBuilder: (context, index) {
                   final post = posts[index];
                   return Card(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     child: ListTile(
                       title: Text(post.text),
                       subtitle: Text('Member ${_shortId(post.authorId)}'),
@@ -115,10 +119,7 @@ class _PostsTabState extends State<PostsTab> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: _send,
-                  ),
+                  IconButton(icon: const Icon(Icons.send), onPressed: _send),
                 ],
               ),
             );

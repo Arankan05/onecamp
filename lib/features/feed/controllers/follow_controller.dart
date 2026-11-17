@@ -9,8 +9,8 @@ class FollowController {
   FollowController({
     UserRepository? userRepository,
     FollowRepository? followRepository,
-  })  : _userRepository = userRepository ?? UserRepository(),
-        _followRepository = followRepository ?? FollowRepository();
+  }) : _userRepository = userRepository ?? UserRepository(),
+       _followRepository = followRepository ?? FollowRepository();
 
   // Get all students
   Stream<List<UserProfile>> getUsers() {

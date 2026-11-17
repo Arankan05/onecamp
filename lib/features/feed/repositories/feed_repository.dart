@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,15 +9,23 @@ import '../models/post_model.dart';
 class FeedRepository {
   final FirebaseFirestore _firestore;
 
-  FeedRepository({
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  FeedRepository({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  static const String _cloudinaryCloudName =
-  String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
+  static const String _cloudinaryCloudName = String.fromEnvironment(
+    'CLOUDINARY_CLOUD_NAME',
+  );
 
-  static const String _cloudinaryUploadPreset =
-  String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET');
+  static const String _cloudinaryUploadPreset = String.fromEnvironment(
+    'CLOUDINARY_UPLOAD_PRESET',
+  );
+
+  // Get single post by ID
+  Future<PostModel?> getPostById(String postId) async {
+    final doc = await _firestore.collection('posts').doc(postId).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return PostModel.fromMap(doc.id, doc.data()!);
+  }
 
   // Get all posts, newest first
   Stream<List<PostModel>> getPosts() {
@@ -27,10 +34,10 @@ class FeedRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return PostModel.fromMap(doc.id, doc.data());
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return PostModel.fromMap(doc.id, doc.data());
+          }).toList();
+        });
   }
 
   // Get posts from users the current student follows
@@ -41,24 +48,29 @@ class FeedRepository {
         .collection('following')
         .snapshots()
         .asyncExpand((followingSnapshot) {
-      final followedUserIds =
-      followingSnapshot.docs.map((doc) => doc.id).toList();
+          final Set<String> followedUserIds = {};
+          for (final doc in followingSnapshot.docs) {
+            followedUserIds.add(doc.id);
+            final uidVal = doc.data()['userId'] as String?;
+            if (uidVal != null && uidVal.isNotEmpty) {
+              followedUserIds.add(uidVal);
+            }
+          }
 
-      if (followedUserIds.isEmpty) {
-        return Stream.value(<PostModel>[]);
-      }
+          if (followedUserIds.isEmpty) {
+            return Stream.value(<PostModel>[]);
+          }
 
-      return _firestore
-          .collection('posts')
-          .where('authorId', whereIn: followedUserIds)
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          return PostModel.fromMap(doc.id, doc.data());
-        }).toList();
-      });
-    });
+          return _firestore.collection('posts').snapshots().map((snapshot) {
+            final posts = snapshot.docs
+                .map((doc) => PostModel.fromMap(doc.id, doc.data()))
+                .where((p) => followedUserIds.contains(p.authorId))
+                .toList();
+
+            posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            return posts;
+          });
+        });
   }
 
   // Upload post image to Cloudinary
@@ -66,41 +78,32 @@ class FeedRepository {
     required File image,
     required String authorId,
   }) async {
-    if (_cloudinaryCloudName.isEmpty ||
-        _cloudinaryUploadPreset.isEmpty) {
-      throw Exception(
-        'Cloudinary configuration is missing. '
-            'Run the app with the required dart-define values.',
-      );
-    }
+    final cloudName = _cloudinaryCloudName.isNotEmpty
+        ? _cloudinaryCloudName
+        : 'o5k43wz7';
+    final uploadPreset = _cloudinaryUploadPreset.isNotEmpty
+        ? _cloudinaryUploadPreset
+        : 'onecamp_chat_images';
 
     final uri = Uri.parse(
-      'https://api.cloudinary.com/v1_1/'
-          '$_cloudinaryCloudName/image/upload',
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
     );
 
     final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = _cloudinaryUploadPreset
+      ..fields['upload_preset'] = uploadPreset
       ..fields['folder'] = 'feed'
       ..fields['public_id'] =
           '${authorId}_${DateTime.now().millisecondsSinceEpoch}'
-      ..files.add(
-        await http.MultipartFile.fromPath('file', image.path),
-      );
+      ..files.add(await http.MultipartFile.fromPath('file', image.path));
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
-    if (response.statusCode != 200 &&
-        response.statusCode != 201) {
-      throw Exception(
-        'Cloudinary upload failed: ${response.body}',
-      );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Cloudinary upload failed: ${response.body}');
     }
 
-    final responseData =
-    jsonDecode(response.body) as Map<String, dynamic>;
-
+    final responseData = jsonDecode(response.body) as Map<String, dynamic>;
     final secureUrl = responseData['secure_url'] as String?;
 
     if (secureUrl == null || secureUrl.isEmpty) {

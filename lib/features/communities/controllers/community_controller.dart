@@ -9,7 +9,7 @@ import '../repositories/community_repository.dart';
 
 class CommunityController extends ChangeNotifier {
   CommunityController({CommunityRepository? repository})
-      : _repository = repository ?? CommunityRepository();
+    : _repository = repository ?? CommunityRepository();
 
   final CommunityRepository _repository;
 
@@ -72,12 +72,14 @@ class CommunityController extends ChangeNotifier {
       notifyListeners();
       return Future.value(false);
     }
-    return _run(() => _repository.createCommunity(
-          name: name,
-          description: description,
-          category: category,
-          userId: uid,
-        ));
+    return _run(
+      () => _repository.createCommunity(
+        name: name,
+        description: description,
+        category: category,
+        userId: uid,
+      ),
+    );
   }
 
   Future<bool> join(String communityId) {
@@ -95,19 +97,22 @@ class CommunityController extends ChangeNotifier {
   Future<bool> addPost(String communityId, String text) {
     final uid = currentUserId;
     if (uid == null) return Future.value(false);
-    return _run(() => _repository.addPost(
-          communityId: communityId,
-          authorId: uid,
-          text: text,
-        ));
+    return _run(
+      () => _repository.addPost(
+        communityId: communityId,
+        authorId: uid,
+        text: text,
+      ),
+    );
   }
 
-  Future<bool> addAnnouncement(
-      String communityId, String title, String body) {
-    return _run(() => _repository.addAnnouncement(
-          communityId: communityId,
-          title: title,
-          body: body,
-        ));
+  Future<bool> addAnnouncement(String communityId, String title, String body) {
+    return _run(
+      () => _repository.addAnnouncement(
+        communityId: communityId,
+        title: title,
+        body: body,
+      ),
+    );
   }
 }

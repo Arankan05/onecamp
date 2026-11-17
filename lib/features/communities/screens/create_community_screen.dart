@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../community_constants.dart';
 import '../controllers/community_controller.dart';
 
@@ -38,16 +40,13 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Community created!')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Community created!')));
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _controller.errorMessage ?? 'Something went wrong.',
-          ),
+          content: Text(_controller.errorMessage ?? 'Something went wrong.'),
         ),
       );
     }
@@ -56,7 +55,13 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Community')),
+      backgroundColor: AppTheme.primaryBackground,
+      appBar: AppBar(
+        title: const Text('Create Community'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
+        leading: const OneCampBackButton(),
+      ),
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {

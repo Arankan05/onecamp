@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'chat_colors.dart';
 
 class ChatTextStyles {

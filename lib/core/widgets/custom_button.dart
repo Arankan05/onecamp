@@ -70,10 +70,7 @@ class CustomButton extends StatelessWidget {
                 icon: Icon(icon, size: 20),
                 label: Text(text),
               )
-            : OutlinedButton(
-                onPressed: onPressed,
-                child: Text(text),
-              ),
+            : OutlinedButton(onPressed: onPressed, child: Text(text)),
       );
     }
 
@@ -86,10 +83,7 @@ class CustomButton extends StatelessWidget {
               icon: Icon(icon, size: 20),
               label: Text(text),
             )
-          : ElevatedButton(
-              onPressed: onPressed,
-              child: Text(text),
-            ),
+          : ElevatedButton(onPressed: onPressed, child: Text(text)),
     );
   }
 }

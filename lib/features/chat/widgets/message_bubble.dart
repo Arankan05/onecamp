@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -6,6 +7,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import '../../../core/theme/app_theme.dart';
+import '../../feed/repositories/user_repository.dart';
+import '../../profile/models/user_profile.dart';
+import '../../profile/screens/other_user_profile_screen.dart';
 import '../models/chat_model.dart';
 import '../models/message_model.dart';
 import '../repositories/chat_repository.dart';
@@ -104,7 +110,10 @@ class _MessageBubbleState extends State<MessageBubble> {
     }
   }
 
-  Future<void> _downloadAndSaveImage(BuildContext context, String imageUrl) async {
+  Future<void> _downloadAndSaveImage(
+    BuildContext context,
+    String imageUrl,
+  ) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       if (Platform.isAndroid) {
@@ -114,7 +123,9 @@ class _MessageBubbleState extends State<MessageBubble> {
           if (mounted) {
             messenger.showSnackBar(
               const SnackBar(
-                content: Text('Storage permission required to download images.'),
+                content: Text(
+                  'Storage permission required to download images.',
+                ),
                 backgroundColor: Colors.orangeAccent,
               ),
             );
@@ -128,7 +139,14 @@ class _MessageBubbleState extends State<MessageBubble> {
           const SnackBar(
             content: Row(
               children: [
-                SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
                 SizedBox(width: 12),
                 Text('Downloading image...'),
               ],
@@ -138,7 +156,9 @@ class _MessageBubbleState extends State<MessageBubble> {
         );
       }
 
-      final response = await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(Uri.parse(imageUrl))
+          .timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}');
       }
@@ -153,7 +173,8 @@ class _MessageBubbleState extends State<MessageBubble> {
         targetDir = await getApplicationDocumentsDirectory();
       }
 
-      final String fileName = 'OneCamp_IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String fileName =
+          'OneCamp_IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final File savedFile = File('${targetDir.path}/$fileName');
       await savedFile.writeAsBytes(response.bodyBytes);
 
@@ -193,18 +214,30 @@ class _MessageBubbleState extends State<MessageBubble> {
           children: [
             const Padding(
               padding: EdgeInsets.all(ChatDimensions.paddingL),
-              child: Text('Forward Message To...', style: ChatTextStyles.chatTileTitle),
+              child: Text(
+                'Forward Message To...',
+                style: ChatTextStyles.chatTileTitle,
+              ),
             ),
             Expanded(
               child: StreamBuilder<List<ChatModel>>(
                 stream: chatRepository.getChatsStream(activeUid),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: ChatColors.primaryPurple));
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: ChatColors.primaryPurple,
+                      ),
+                    );
                   }
                   final chats = snapshot.data ?? [];
                   if (chats.isEmpty) {
-                    return const Center(child: Text('No active conversations available.', style: ChatTextStyles.chatTileSubtitle));
+                    return const Center(
+                      child: Text(
+                        'No active conversations available.',
+                        style: ChatTextStyles.chatTileSubtitle,
+                      ),
+                    );
                   }
                   return ListView.builder(
                     itemCount: chats.length,
@@ -218,8 +251,14 @@ class _MessageBubbleState extends State<MessageBubble> {
                           isGroup: chat.isGroup,
                         ),
                         title: Text(title, style: ChatTextStyles.chatTileTitle),
-                        subtitle: Text(chat.isGroup ? 'Group Conversation' : 'Direct Chat', style: ChatTextStyles.chatTileSubtitle),
-                        trailing: const Icon(Icons.send_rounded, color: ChatColors.primaryPurple),
+                        subtitle: Text(
+                          chat.isGroup ? 'Group Conversation' : 'Direct Chat',
+                          style: ChatTextStyles.chatTileSubtitle,
+                        ),
+                        trailing: const Icon(
+                          Icons.send_rounded,
+                          color: ChatColors.primaryPurple,
+                        ),
                         onTap: () async {
                           Navigator.pop(sheetContext);
                           final messenger = ScaffoldMessenger.of(context);
@@ -230,11 +269,17 @@ class _MessageBubbleState extends State<MessageBubble> {
                               senderName: widget.senderName ?? 'Student',
                             );
                             messenger.showSnackBar(
-                              SnackBar(content: Text('Message forwarded to $title'), backgroundColor: ChatColors.onlineGreen),
+                              SnackBar(
+                                content: Text('Message forwarded to $title'),
+                                backgroundColor: ChatColors.onlineGreen,
+                              ),
                             );
                           } catch (e) {
                             messenger.showSnackBar(
-                              SnackBar(content: Text('Failed to forward: $e'), backgroundColor: Colors.redAccent),
+                              SnackBar(
+                                content: Text('Failed to forward: $e'),
+                                backgroundColor: Colors.redAccent,
+                              ),
                             );
                           }
                         },
@@ -294,7 +339,9 @@ class _MessageBubbleState extends State<MessageBubble> {
               const SizedBox(height: ChatDimensions.paddingM),
               if (readerIds.isEmpty)
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: ChatDimensions.paddingL),
+                  padding: EdgeInsets.symmetric(
+                    vertical: ChatDimensions.paddingL,
+                  ),
                   child: Center(
                     child: Text(
                       'Nobody in the group has read this message yet.',
@@ -309,7 +356,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                     itemCount: readerIds.length,
                     itemBuilder: (context, index) {
                       final readerId = readerIds[index];
-                      final readerName = widget.senderNamesCache?[readerId] ?? 'Student';
+                      final readerName =
+                          widget.senderNamesCache?[readerId] ?? 'Student';
 
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -317,7 +365,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                           name: readerName,
                           size: ChatDimensions.avatarSmall,
                         ),
-                        title: Text(readerName, style: ChatTextStyles.chatTileTitle),
+                        title: Text(
+                          readerName,
+                          style: ChatTextStyles.chatTileTitle,
+                        ),
                         trailing: const Icon(
                           Icons.done_all,
                           size: 16.0,
@@ -369,25 +420,21 @@ class _MessageBubbleState extends State<MessageBubble> {
       );
     }
 
-    final readers = widget.message.readBy.where((id) => id != widget.message.senderId).toList();
+    final readers = widget.message.readBy
+        .where((id) => id != widget.message.senderId)
+        .toList();
     final bool isReadByOthers = readers.isNotEmpty;
 
     if (!widget.isGroup) {
       if (isReadByOthers) {
-        return const Icon(
-          Icons.done_all,
-          size: 14.0,
-          color: Color(0xFF80DEEA),
-        );
+        return const Icon(Icons.done_all, size: 14.0, color: Color(0xFF80DEEA));
       }
-      return const Icon(
-        Icons.done,
-        size: 14.0,
-        color: Color(0xB3FFFFFF),
-      );
+      return const Icon(Icons.done, size: 14.0, color: Color(0xB3FFFFFF));
     }
 
-    final String labelText = isReadByOthers ? 'Seen by ${readers.length}' : 'Not seen yet';
+    final String labelText = isReadByOthers
+        ? 'Seen by ${readers.length}'
+        : 'Not seen yet';
 
     return GestureDetector(
       onTap: () => _showGroupReadersModal(context, readers),
@@ -406,7 +453,9 @@ class _MessageBubbleState extends State<MessageBubble> {
           Icon(
             isReadByOthers ? Icons.done_all : Icons.done,
             size: 13.0,
-            color: isReadByOthers ? const Color(0xFF80DEEA) : const Color(0xB3FFFFFF),
+            color: isReadByOthers
+                ? const Color(0xFF80DEEA)
+                : const Color(0xB3FFFFFF),
           ),
         ],
       ),
@@ -426,24 +475,50 @@ class _MessageBubbleState extends State<MessageBubble> {
           children: [
             ListTile(
               leading: const Icon(Icons.reply, color: ChatColors.primaryPurple),
-              title: const Text('Reply', style: TextStyle(color: Color(0xFF29213F), fontWeight: FontWeight.w600)),
+              title: const Text(
+                'Reply',
+                style: TextStyle(
+                  color: Color(0xFF29213F),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(bottomSheetContext);
                 if (widget.onReply != null) widget.onReply!(widget.message);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.shortcut_rounded, color: ChatColors.primaryPurple),
-              title: const Text('Forward', style: TextStyle(color: Color(0xFF29213F), fontWeight: FontWeight.w600)),
+              leading: const Icon(
+                Icons.shortcut_rounded,
+                color: ChatColors.primaryPurple,
+              ),
+              title: const Text(
+                'Forward',
+                style: TextStyle(
+                  color: Color(0xFF29213F),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(bottomSheetContext);
                 _showForwardChatSelector(context);
               },
             ),
-            if (widget.message.isImage && widget.message.imageUrl != null && !widget.message.isDeleted)
+            if (widget.message.isImage &&
+                widget.message.imageUrl != null &&
+                !widget.message.isDeleted)
               ListTile(
-                leading: const Icon(Icons.download_rounded, color: ChatColors.primaryPurple),
-                title: const Text('Download Image', style: TextStyle(color: Color(0xFF29213F), fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.download_rounded,
+                  color: ChatColors.primaryPurple,
+                ),
+                title: const Text(
+                  'Download Image',
+                  style: TextStyle(
+                    color: Color(0xFF29213F),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
                   _downloadAndSaveImage(context, widget.message.imageUrl!);
@@ -451,19 +526,39 @@ class _MessageBubbleState extends State<MessageBubble> {
               ),
             if (widget.message.text.isNotEmpty && !widget.message.isDeleted)
               ListTile(
-                leading: const Icon(Icons.copy, color: ChatColors.primaryPurple),
-                title: const Text('Copy text', style: TextStyle(color: Color(0xFF29213F), fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.copy,
+                  color: ChatColors.primaryPurple,
+                ),
+                title: const Text(
+                  'Copy text',
+                  style: TextStyle(
+                    color: Color(0xFF29213F),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
                   Clipboard.setData(ClipboardData(text: widget.message.text));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Message copied to clipboard')),
+                    const SnackBar(
+                      content: Text('Message copied to clipboard'),
+                    ),
                   );
                 },
               ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.orangeAccent),
-              title: const Text('Delete for me', style: TextStyle(color: Color(0xFF29213F), fontWeight: FontWeight.w600)),
+              leading: const Icon(
+                Icons.delete_outline,
+                color: Colors.orangeAccent,
+              ),
+              title: const Text(
+                'Delete for me',
+                style: TextStyle(
+                  color: Color(0xFF29213F),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(bottomSheetContext);
                 _confirmDelete(
@@ -471,15 +566,25 @@ class _MessageBubbleState extends State<MessageBubble> {
                   title: 'Delete for me?',
                   content: 'This message will be hidden from your view only.',
                   onConfirm: () {
-                    if (widget.onDeleteForMe != null) widget.onDeleteForMe!(widget.message);
+                    if (widget.onDeleteForMe != null)
+                      widget.onDeleteForMe!(widget.message);
                   },
                 );
               },
             ),
             if (widget.isSender && !widget.message.isDeleted)
               ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                title: const Text('Delete for everyone', style: TextStyle(color: Color(0xFF29213F), fontWeight: FontWeight.w600)),
+                leading: const Icon(
+                  Icons.delete_forever,
+                  color: Colors.redAccent,
+                ),
+                title: const Text(
+                  'Delete for everyone',
+                  style: TextStyle(
+                    color: Color(0xFF29213F),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
                   _confirmDelete(
@@ -487,7 +592,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                     title: 'Delete for everyone?',
                     content: 'This will replace the message text for all participants.',
                     onConfirm: () {
-                      if (widget.onDeleteForEveryone != null) widget.onDeleteForEveryone!(widget.message);
+                      if (widget.onDeleteForEveryone != null)
+                        widget.onDeleteForEveryone!(widget.message);
                     },
                   );
                 },
@@ -545,7 +651,9 @@ class _MessageBubbleState extends State<MessageBubble> {
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return const Center(
-                      child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                      child: CircularProgressIndicator(
+                        color: ChatColors.primaryPurple,
+                      ),
                     );
                   },
                   errorBuilder: (context, error, stackTrace) => const Icon(
@@ -562,13 +670,21 @@ class _MessageBubbleState extends State<MessageBubble> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.download_rounded, color: Colors.white, size: 28),
+                    icon: const Icon(
+                      Icons.download_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                     onPressed: () => _downloadAndSaveImage(context, imageUrl),
                     tooltip: 'Save Image',
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -583,330 +699,546 @@ class _MessageBubbleState extends State<MessageBubble> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    final maxWidth = mediaQuery.size.width * ChatDimensions.maxBubbleWidthFactor;
+    final maxWidth =
+        mediaQuery.size.width * ChatDimensions.maxBubbleWidthFactor;
 
-    return Align(
-      alignment: widget.isSender ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: () => _showActionMenu(context),
-        child: Container(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          margin: const EdgeInsets.symmetric(
-            horizontal: ChatDimensions.paddingL,
-            vertical: ChatDimensions.paddingXS,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: ChatDimensions.bubblePaddingHorizontal,
-            vertical: ChatDimensions.bubblePaddingVertical,
-          ),
-          decoration: widget.isSender
-              ? ChatDecorations.senderBubbleDecoration
-              : ChatDecorations.receiverBubbleDecoration,
-          child: Column(
-            crossAxisAlignment:
-                widget.isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              // Forwarded Badge
-              if (widget.message.isForwarded)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.shortcut_rounded,
-                        size: 12,
-                        color: widget.isSender ? Colors.white70 : ChatColors.primaryPurple,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.message.forwardedFrom != null
-                            ? 'Forwarded from ${widget.message.forwardedFrom}'
-                            : 'Forwarded',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.bold,
-                          color: widget.isSender ? Colors.white70 : ChatColors.primaryPurple,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              if (!widget.isSender && widget.senderName != null && widget.senderName!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: ChatDimensions.paddingXS),
-                  child: Text(
-                    widget.senderName!,
-                    style: const TextStyle(
-                      fontSize: 11.0,
-                      fontWeight: FontWeight.bold,
-                      color: ChatColors.primaryDarkPurple,
-                    ),
-                  ),
-                ),
-
-              // Reply Preview Bubble
-              if (widget.message.replyToText != null && widget.message.replyToText!.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 6.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    color: widget.isSender ? const Color(0x26FFFFFF) : ChatColors.lightLavender,
-                    borderRadius: BorderRadius.circular(8.0),
-                    border: Border(
-                      left: BorderSide(
-                        color: widget.isSender ? Colors.white : ChatColors.primaryPurple,
-                        width: 3.0,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.message.replyToSenderName ?? 'Reply',
-                        style: TextStyle(
-                          fontSize: 10.0,
-                          fontWeight: FontWeight.bold,
-                          color: widget.isSender ? Colors.white : ChatColors.primaryDarkPurple,
-                        ),
-                      ),
-                      Text(
-                        widget.message.replyToText!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          color: widget.isSender ? Colors.white70 : ChatColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Image Content
-              if (widget.message.isImage && widget.message.imageUrl != null && !widget.message.isDeleted)
-                GestureDetector(
-                  onTap: () => _openFullImagePreview(context, widget.message.imageUrl!),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(ChatDimensions.radiusS),
-                    child: Image.network(
-                      widget.message.imageUrl!,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 180,
-                          color: Colors.black12,
-                          child: const Center(
-                            child: CircularProgressIndicator(color: ChatColors.primaryPurple),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 120,
-                        color: Colors.black12,
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.broken_image_outlined,
-                                color: ChatColors.textLight,
-                                size: 36,
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Failed to load image',
-                                style: TextStyle(fontSize: 11, color: ChatColors.textLight),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Document Attachment Card
-              if (widget.message.isDocument && !widget.message.isDeleted)
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: widget.isSender ? const Color(0x26FFFFFF) : ChatColors.lightLavender,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: widget.isSender ? Colors.white24 : ChatColors.primaryPurple,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.insert_drive_file,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.message.fileName ?? widget.message.text,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: widget.isSender ? Colors.white : const Color(0xFF29213F),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${(widget.message.fileExtension ?? 'doc').toUpperCase()} • ${_formatFileSize(widget.message.fileSize)}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: widget.isSender ? Colors.white70 : ChatColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (widget.message.effectiveMediaUrl != null)
-                        IconButton(
-                          icon: Icon(
-                            Icons.download_rounded,
-                            color: widget.isSender ? Colors.white : ChatColors.primaryPurple,
-                          ),
-                          onPressed: () => _openDocumentUrl(widget.message.effectiveMediaUrl!),
-                        ),
-                    ],
-                  ),
-                ),
-
-              // Audio / Voice Message Card
-              if ((widget.message.isAudio || widget.message.isVoice) && !widget.message.isDeleted)
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: widget.isSender ? const Color(0x26FFFFFF) : ChatColors.lightLavender,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          _isPlayingAudio ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                          size: 36,
-                          color: widget.isSender ? Colors.white : ChatColors.primaryPurple,
-                        ),
-                        onPressed: widget.message.effectiveMediaUrl != null
-                            ? () => _toggleAudioPlayback(widget.message.effectiveMediaUrl!)
-                            : null,
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.message.isVoice ? '🎤 Voice Message' : (widget.message.fileName ?? '🎵 Audio Track'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: widget.isSender ? Colors.white : const Color(0xFF29213F),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            LinearProgressIndicator(
-                              value: _audioDuration.inMilliseconds > 0
-                                  ? _audioPosition.inMilliseconds / _audioDuration.inMilliseconds
-                                  : 0.0,
-                              backgroundColor: widget.isSender ? Colors.white24 : Colors.black12,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                widget.isSender ? Colors.white : ChatColors.primaryPurple,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _isPlayingAudio
-                                  ? '${_formatDuration(_audioPosition.inSeconds)} / ${_formatDuration(_audioDuration.inSeconds)}'
-                                  : _formatDuration(widget.message.durationSeconds ?? 0),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: widget.isSender ? Colors.white70 : ChatColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Message Text Content
-              if (widget.message.isDeleted)
-                Row(
+    final Widget bubbleWidget = GestureDetector(
+      onLongPress: () => _showActionMenu(context),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        margin: const EdgeInsets.symmetric(
+          horizontal: 6.0,
+          vertical: ChatDimensions.paddingXS,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: ChatDimensions.bubblePaddingHorizontal,
+          vertical: ChatDimensions.bubblePaddingVertical,
+        ),
+        decoration: widget.isSender
+            ? ChatDecorations.senderBubbleDecoration
+            : ChatDecorations.receiverBubbleDecoration,
+        child: Column(
+          crossAxisAlignment: widget.isSender
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            // Forwarded Badge
+            if (widget.message.isForwarded)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.block,
-                      size: 14,
-                      color: widget.isSender ? Colors.white70 : ChatColors.textLight,
+                      Icons.shortcut_rounded,
+                      size: 12,
+                      color: widget.isSender
+                          ? Colors.white70
+                          : ChatColors.primaryPurple,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'This message was deleted',
+                      widget.message.forwardedFrom != null
+                          ? 'Forwarded from ${widget.message.forwardedFrom}'
+                          : 'Forwarded',
                       style: TextStyle(
+                        fontSize: 10,
                         fontStyle: FontStyle.italic,
-                        fontSize: 14.0,
-                        color: widget.isSender ? Colors.white70 : ChatColors.textLight,
+                        fontWeight: FontWeight.bold,
+                        color: widget.isSender
+                            ? Colors.white70
+                            : ChatColors.primaryPurple,
                       ),
                     ),
                   ],
-                )
-              else if (widget.message.text.isNotEmpty && !widget.message.isDocument)
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: widget.message.isImage ? ChatDimensions.paddingS : 0,
-                  ),
-                  child: Text(
-                    widget.message.text,
-                    style: widget.isSender
-                        ? ChatTextStyles.senderMessage
-                        : ChatTextStyles.receiverMessage,
+                ),
+              ),
+
+            if (!widget.isSender &&
+                widget.senderName != null &&
+                widget.senderName!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  bottom: ChatDimensions.paddingXS,
+                ),
+                child: Text(
+                  widget.senderName!,
+                  style: const TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.bold,
+                    color: ChatColors.primaryDarkPurple,
                   ),
                 ),
+              ),
 
-              const SizedBox(height: 2.0),
+            // Reply Preview Bubble
+            if (widget.message.replyToText != null &&
+                widget.message.replyToText!.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 6.0),
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: widget.isSender
+                      ? const Color(0x26FFFFFF)
+                      : ChatColors.lightLavender,
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border(
+                    left: BorderSide(
+                      color: widget.isSender
+                          ? Colors.white
+                          : ChatColors.primaryPurple,
+                      width: 3.0,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.message.replyToSenderName ?? 'Reply',
+                      style: TextStyle(
+                        fontSize: 10.0,
+                        fontWeight: FontWeight.bold,
+                        color: widget.isSender
+                            ? Colors.white
+                            : ChatColors.primaryDarkPurple,
+                      ),
+                    ),
+                    Text(
+                      widget.message.replyToText!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: widget.isSender
+                            ? Colors.white70
+                            : ChatColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-              // Timestamp & Status Icon Row
+            // Image Content
+            if (widget.message.isImage &&
+                widget.message.imageUrl != null &&
+                !widget.message.isDeleted)
+              GestureDetector(
+                onTap: () =>
+                    _openFullImagePreview(context, widget.message.imageUrl!),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(ChatDimensions.radiusS),
+                  child: Image.network(
+                    widget.message.imageUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 180,
+                        color: Colors.black12,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: ChatColors.primaryPurple,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 120,
+                      color: Colors.black12,
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image_outlined,
+                              color: ChatColors.textLight,
+                              size: 36,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Failed to load image',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: ChatColors.textLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Document Attachment Card
+            if (widget.message.isDocument && !widget.message.isDeleted)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: widget.isSender
+                      ? const Color(0x26FFFFFF)
+                      : ChatColors.lightLavender,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: widget.isSender
+                            ? Colors.white24
+                            : ChatColors.primaryPurple,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.insert_drive_file,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.message.fileName ?? widget.message.text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: widget.isSender
+                                  ? Colors.white
+                                  : const Color(0xFF29213F),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${(widget.message.fileExtension ?? 'doc').toUpperCase()} • ${_formatFileSize(widget.message.fileSize)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: widget.isSender
+                                  ? Colors.white70
+                                  : ChatColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (widget.message.effectiveMediaUrl != null)
+                      IconButton(
+                        icon: Icon(
+                          Icons.download_rounded,
+                          color: widget.isSender
+                              ? Colors.white
+                              : ChatColors.primaryPurple,
+                        ),
+                        onPressed: () =>
+                            _openDocumentUrl(widget.message.effectiveMediaUrl!),
+                      ),
+                  ],
+                ),
+              ),
+
+            // Audio / Voice Message Card
+            if ((widget.message.isAudio || widget.message.isVoice) &&
+                !widget.message.isDeleted)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: widget.isSender
+                      ? const Color(0x26FFFFFF)
+                      : ChatColors.lightLavender,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _isPlayingAudio
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_fill,
+                        size: 36,
+                        color: widget.isSender
+                            ? Colors.white
+                            : ChatColors.primaryPurple,
+                      ),
+                      onPressed: widget.message.effectiveMediaUrl != null
+                          ? () => _toggleAudioPlayback(
+                              widget.message.effectiveMediaUrl!,
+                            )
+                          : null,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.message.isVoice
+                                ? '🎤 Voice Message'
+                                : (widget.message.fileName ?? '🎵 Audio Track'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: widget.isSender
+                                  ? Colors.white
+                                  : const Color(0xFF29213F),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          SliderTheme(
+                            data: const SliderThemeData(
+                              thumbShape: RoundSliderThumbShape(
+                                enabledThumbRadius: 6,
+                              ),
+                              overlayShape: RoundSliderOverlayShape(
+                                overlayRadius: 12,
+                              ),
+                              trackHeight: 3,
+                            ),
+                            child: Slider(
+                              value: _audioDuration.inMilliseconds > 0
+                                  ? _audioPosition.inMilliseconds
+                                        .clamp(0, _audioDuration.inMilliseconds)
+                                        .toDouble()
+                                  : 0.0,
+                              max: _audioDuration.inMilliseconds > 0
+                                  ? _audioDuration.inMilliseconds.toDouble()
+                                  : 1.0,
+                              activeColor: widget.isSender
+                                  ? Colors.white
+                                  : ChatColors.primaryPurple,
+                              inactiveColor: widget.isSender
+                                  ? Colors.white24
+                                  : Colors.black12,
+                              onChanged: (val) {
+                                if (_audioPlayer != null) {
+                                  _audioPlayer!.seek(
+                                    Duration(milliseconds: val.toInt()),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _isPlayingAudio
+                                ? '${_formatDuration(_audioPosition.inSeconds)} / ${_formatDuration(_audioDuration.inSeconds)}'
+                                : _formatDuration(
+                                    widget.message.durationSeconds ?? 0,
+                                  ),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: widget.isSender
+                                  ? Colors.white70
+                                  : ChatColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Call History Entry Card
+            if (widget.message.messageType == 'call' &&
+                !widget.message.isDeleted)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.isSender
+                      ? const Color(0x26FFFFFF)
+                      : ChatColors.lightLavender,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color:
+                            widget.message.text.contains('Missed') ||
+                                widget.message.text.contains('Declined')
+                            ? Colors.red.shade100
+                            : AppTheme.secondaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        widget.message.text.contains('Missed')
+                            ? Icons.phone_missed_rounded
+                            : (widget.message.text.contains('Declined')
+                                  ? Icons.phone_disabled_rounded
+                                  : (widget.message.text.contains('Video')
+                                        ? Icons.videocam_rounded
+                                        : Icons.call_rounded)),
+                        color:
+                            widget.message.text.contains('Missed') ||
+                                widget.message.text.contains('Declined')
+                            ? Colors.red
+                            : AppTheme.primaryColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.message.text,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: widget.isSender
+                                ? Colors.white
+                                : const Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.isSender ? 'Outgoing Call' : 'Incoming Call',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: widget.isSender
+                                ? Colors.white70
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+            // Message Text Content
+            if (widget.message.isDeleted)
               Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: widget.isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
                 children: [
-                  Text(
-                    _formatTimestamp(widget.message.sentAt),
-                    style: widget.isSender
-                        ? ChatTextStyles.messageTimeSender
-                        : ChatTextStyles.messageTimeReceiver,
+                  Icon(
+                    Icons.block,
+                    size: 14,
+                    color: widget.isSender
+                        ? Colors.white70
+                        : ChatColors.textLight,
                   ),
-                  if (widget.isSender) ...[
-                    const SizedBox(width: 4.0),
-                    _buildStatusIndicator(context),
-                  ],
+                  const SizedBox(width: 4),
+                  Text(
+                    'This message was deleted',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 14.0,
+                      color: widget.isSender
+                          ? Colors.white70
+                          : ChatColors.textLight,
+                    ),
+                  ),
                 ],
+              )
+            else if (widget.message.text.isNotEmpty &&
+                !widget.message.isDocument)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: widget.message.isImage ? ChatDimensions.paddingS : 0,
+                ),
+                child: Text(
+                  widget.message.text,
+                  style: widget.isSender
+                      ? ChatTextStyles.senderMessage
+                      : ChatTextStyles.receiverMessage,
+                ),
               ),
-            ],
-          ),
+
+            const SizedBox(height: 2.0),
+
+            // Timestamp & Status Icon Row
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: widget.isSender
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
+              children: [
+                Text(
+                  _formatTimestamp(widget.message.sentAt),
+                  style: widget.isSender
+                      ? ChatTextStyles.messageTimeSender
+                      : ChatTextStyles.messageTimeReceiver,
+                ),
+                if (widget.isSender) ...[
+                  const SizedBox(width: 4.0),
+                  _buildStatusIndicator(context),
+                ],
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+
+    if (widget.isSender) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(right: ChatDimensions.paddingL),
+          child: bubbleWidget,
+        ),
+      );
+    }
+
+    final resolvedSenderName =
+        widget.senderName ??
+        (widget.senderNamesCache != null
+            ? widget.senderNamesCache![widget.message.senderId]
+            : null) ??
+        'Student';
+
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: ChatDimensions.paddingL,
+        bottom: 4.0,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (widget.message.senderId.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        OtherUserProfileScreen(userId: widget.message.senderId),
+                  ),
+                );
+              }
+            },
+            child: FutureBuilder<UserProfile?>(
+              future: UserRepository().getUserById(widget.message.senderId),
+              builder: (context, snapshot) {
+                final avatarUrl = snapshot.data?.profileImageUrl;
+                return ChatAvatar(
+                  name: resolvedSenderName,
+                  imageUrl: avatarUrl,
+                  userId: widget.message.senderId,
+                  size: 30,
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Align(alignment: Alignment.centerLeft, child: bubbleWidget),
+          ),
+        ],
       ),
     );
   }

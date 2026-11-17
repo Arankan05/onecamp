@@ -62,7 +62,8 @@ class ChatModel {
     return ChatModel(
       chatId: documentId,
       type: map['type'] as String? ?? 'direct',
-      participantIds: (map['participantIds'] as List<dynamic>?)
+      participantIds:
+          (map['participantIds'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -71,15 +72,18 @@ class ChatModel {
       lastMessage: map['lastMessage'] as String?,
       lastMessageAt: parseDateTime(map['lastMessageAt']),
       createdAt: parseDateTime(map['createdAt']),
-      mutedBy: (map['mutedBy'] as List<dynamic>?)
+      mutedBy:
+          (map['mutedBy'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      pinnedBy: (map['pinnedBy'] as List<dynamic>?)
+      pinnedBy:
+          (map['pinnedBy'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      hiddenFor: (map['hiddenFor'] as List<dynamic>?)
+      hiddenFor:
+          (map['hiddenFor'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],

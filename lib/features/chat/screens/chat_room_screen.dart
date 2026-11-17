@@ -1,9 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../core/services/presence_service.dart';
 import '../../../core/services/call_service.dart';
 import '../../../core/services/chat_notification_service.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import 'call_screen.dart';
 import '../models/message_model.dart';
 import '../repositories/chat_repository.dart';
@@ -67,22 +70,24 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _listenForIncomingCalls();
 
     if (!widget.isGroup && widget.otherUserId != null) {
-      _blockedUsersSubscription = _chatRepository.getBlockedUserIdsStream().listen((_) {
-        _checkBlockAndPreferences();
-      });
+      _blockedUsersSubscription = _chatRepository
+          .getBlockedUserIdsStream()
+          .listen((_) {
+            _checkBlockAndPreferences();
+          });
     }
   }
 
   void _listenForIncomingCalls() {
-    _incomingCallSubscription = _callService.getIncomingCallsStream().listen((call) {
+    _incomingCallSubscription = _callService.getIncomingCallsStream().listen((
+      call,
+    ) {
       if (call != null && mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CallScreen(
-              initialCall: call,
-              isIncoming: true,
-            ),
+            builder: (context) =>
+                CallScreen(initialCall: call, isIncoming: true),
           ),
         );
       }
@@ -100,12 +105,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _checkBlockAndPreferences() async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null) return;
 
     if (!widget.isGroup && widget.otherUserId != null) {
       final iBlocked = await _chatRepository.isUserBlocked(widget.otherUserId!);
-      final directBlocked = await _chatRepository.isDirectChatBlocked(widget.otherUserId!);
+      final directBlocked = await _chatRepository.isDirectChatBlocked(
+        widget.otherUserId!,
+      );
       if (mounted) {
         setState(() {
           _iBlocked = iBlocked;
@@ -115,7 +123,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-  void _markUnreadMessagesAsRead(List<MessageModel> messages, String activeUid) {
+  void _markUnreadMessagesAsRead(
+    List<MessageModel> messages,
+    String activeUid,
+  ) {
     for (final message in messages) {
       if (message.senderId != activeUid &&
           !message.readBy.contains(activeUid) &&
@@ -131,12 +142,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Future<void> _loadParticipantNames() async {
     if (widget.participantIds.isEmpty) return;
-    final profiles = await _chatRepository.getUsersProfiles(widget.participantIds);
+    final profiles = await _chatRepository.getUsersProfiles(
+      widget.participantIds,
+    );
     if (mounted) {
       setState(() {
         profiles.forEach((id, data) {
           _senderNamesCache[id] =
-              data['name'] as String? ?? data['displayName'] as String? ?? data['email'] as String? ?? 'User';
+              data['name'] as String? ??
+              data['displayName'] as String? ??
+              data['email'] as String? ??
+              'User';
         });
       });
     }
@@ -170,7 +186,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _handleSendText(String text) async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null || text.trim().isEmpty) return;
 
     if (_isBlocked) {
@@ -221,7 +238,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _localPendingMessages[clientMessageId] = pendingMsg.copyWith(status: 'failed');
+          _localPendingMessages[clientMessageId] = pendingMsg.copyWith(
+            status: 'failed',
+          );
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -234,7 +253,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _handleSendImage(String imageUrl) async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null || imageUrl.trim().isEmpty) return;
 
     if (_isBlocked) {
@@ -279,7 +299,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _localPendingMessages[clientMessageId] = pendingMsg.copyWith(status: 'failed');
+          _localPendingMessages[clientMessageId] = pendingMsg.copyWith(
+            status: 'failed',
+          );
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -297,12 +319,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     int fileSize,
     String fileExtension,
   ) async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null) return;
 
     if (_isBlocked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot send document in a blocked conversation.')),
+        const SnackBar(
+          content: Text('Cannot send document in a blocked conversation.'),
+        ),
       );
       return;
     }
@@ -318,9 +343,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send document: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send document: $e')));
       }
     }
   }
@@ -331,12 +356,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     int fileSize,
     int durationSeconds,
   ) async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null) return;
 
     if (_isBlocked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot send audio in a blocked conversation.')),
+        const SnackBar(
+          content: Text('Cannot send audio in a blocked conversation.'),
+        ),
       );
       return;
     }
@@ -352,20 +380,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send audio: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to send audio: $e')));
       }
     }
   }
 
   Future<void> _handleSendVoice(String mediaUrl, int durationSeconds) async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null) return;
 
     if (_isBlocked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot send voice message in a blocked conversation.')),
+        const SnackBar(
+          content: Text('Cannot send voice message in a blocked conversation.'),
+        ),
       );
       return;
     }
@@ -387,11 +417,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _handleRetry(MessageModel message) async {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
     if (activeUid == null) return;
 
     setState(() {
-      _localPendingMessages[message.messageId] = message.copyWith(status: 'pending');
+      _localPendingMessages[message.messageId] = message.copyWith(
+        status: 'pending',
+      );
     });
 
     try {
@@ -423,7 +456,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _localPendingMessages[message.messageId] = message.copyWith(status: 'failed');
+          _localPendingMessages[message.messageId] = message.copyWith(
+            status: 'failed',
+          );
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -451,7 +486,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -466,14 +504,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
   }
 
   void _showSharedMediaSheet(List<MessageModel> messages) {
-    final imageMessages = messages.where((m) => m.isImage && m.imageUrl != null && !m.isDeleted).toList();
+    final imageMessages = messages
+        .where((m) => m.isImage && m.imageUrl != null && !m.isDeleted)
+        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -493,14 +536,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
             Expanded(
               child: imageMessages.isEmpty
-                  ? const Center(child: Text('No shared media yet.', style: ChatTextStyles.chatTileSubtitle))
+                  ? const Center(
+                      child: Text(
+                        'No shared media yet.',
+                        style: ChatTextStyles.chatTileSubtitle,
+                      ),
+                    )
                   : GridView.builder(
                       padding: const EdgeInsets.all(ChatDimensions.paddingL),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
                       itemCount: imageMessages.length,
                       itemBuilder: (context, index) {
                         return ClipRRect(
@@ -548,12 +597,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 );
                 navigator.pop();
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Report submitted successfully.')),
+                  const SnackBar(
+                    content: Text('Report submitted successfully.'),
+                  ),
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: ChatColors.primaryPurple),
-            child: const Text('Submit Report', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ChatColors.primaryPurple,
+            ),
+            child: const Text(
+              'Submit Report',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -562,9 +618,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final activeUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
 
-    final isParticipant = widget.participantIds.isEmpty ||
+    final isParticipant =
+        widget.participantIds.isEmpty ||
         (activeUid != null && widget.participantIds.contains(activeUid));
 
     if (activeUid == null || !isParticipant) {
@@ -586,6 +644,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         backgroundColor: ChatColors.cardBackground,
         elevation: 0,
         titleSpacing: 0,
+        leading: const OneCampBackButton(),
         title: _isSearchActive
             ? TextField(
                 autofocus: true,
@@ -624,11 +683,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           )
                         else if (widget.otherUserId != null)
                           StreamBuilder<Map<String, dynamic>>(
-                            stream: PresenceService().getUserPresenceStream(widget.otherUserId!),
+                            stream: PresenceService().getUserPresenceStream(
+                              widget.otherUserId!,
+                            ),
                             builder: (context, snapshot) {
-                              final presence = snapshot.data ?? {'isOnline': false, 'lastSeen': null};
-                              final bool isOnline = presence['isOnline'] as bool? ?? false;
-                              final DateTime? lastSeen = presence['lastSeen'] as DateTime?;
+                              final presence =
+                                  snapshot.data ??
+                                  {'isOnline': false, 'lastSeen': null};
+                              final bool isOnline =
+                                  presence['isOnline'] as bool? ?? false;
+                              final DateTime? lastSeen =
+                                  presence['lastSeen'] as DateTime?;
 
                               if (isOnline) {
                                 return const Text(
@@ -636,8 +701,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                   style: ChatTextStyles.appBarSubtitle,
                                 );
                               } else if (lastSeen != null) {
-                                final hour = lastSeen.hour.toString().padLeft(2, '0');
-                                final min = lastSeen.minute.toString().padLeft(2, '0');
+                                final hour = lastSeen.hour.toString().padLeft(
+                                  2,
+                                  '0',
+                                );
+                                final min = lastSeen.minute.toString().padLeft(
+                                  2,
+                                  '0',
+                                );
                                 return Text(
                                   'Offline • Last seen $hour:$min',
                                   style: ChatTextStyles.appBarSubtitle,
@@ -662,12 +733,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         actions: [
           if (!widget.isGroup && widget.otherUserId != null) ...[
             IconButton(
-              icon: const Icon(Icons.call_outlined, color: ChatColors.primaryPurple, size: 22),
+              icon: const Icon(
+                Icons.call_outlined,
+                color: ChatColors.primaryPurple,
+                size: 22,
+              ),
               onPressed: () => _startCall(isVideo: false),
               tooltip: 'Audio Call',
             ),
             IconButton(
-              icon: const Icon(Icons.videocam_outlined, color: ChatColors.primaryPurple, size: 22),
+              icon: const Icon(
+                Icons.videocam_outlined,
+                color: ChatColors.primaryPurple,
+                size: 22,
+              ),
               onPressed: () => _startCall(isVideo: true),
               tooltip: 'Video Call',
             ),
@@ -685,24 +764,34 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           else
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: ChatColors.textPrimary),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               onSelected: (value) async {
                 switch (value) {
                   case 'mute':
                     setState(() => _isMuted = !_isMuted);
-                    await _chatRepository.toggleMuteChat(chatId: widget.chatId, isMuted: _isMuted);
+                    await _chatRepository.toggleMuteChat(
+                      chatId: widget.chatId,
+                      isMuted: _isMuted,
+                    );
                     break;
                   case 'pin':
                     setState(() => _isPinned = !_isPinned);
-                    await _chatRepository.togglePinChat(chatId: widget.chatId, isPinned: _isPinned);
+                    await _chatRepository.togglePinChat(
+                      chatId: widget.chatId,
+                      isPinned: _isPinned,
+                    );
                     break;
                   case 'search':
                     setState(() => _isSearchActive = true);
                     break;
                   case 'media':
-                    _chatRepository.getMessagesStream(widget.chatId).first.then((msgs) {
-                      if (mounted) _showSharedMediaSheet(msgs);
-                    });
+                    _chatRepository.getMessagesStream(widget.chatId).first.then(
+                      (msgs) {
+                        if (mounted) _showSharedMediaSheet(msgs);
+                      },
+                    );
                     break;
                   case 'block':
                     if (widget.otherUserId != null) {
@@ -728,11 +817,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'mute',
-                  child: Text(_isMuted ? 'Unmute notifications' : 'Mute notifications'),
+                  child: Text(
+                    _isMuted ? 'Unmute notifications' : 'Mute notifications',
+                  ),
                 ),
                 PopupMenuItem(
                   value: 'pin',
-                  child: Text(_isPinned ? 'Unpin conversation' : 'Pin conversation'),
+                  child: Text(
+                    _isPinned ? 'Unpin conversation' : 'Pin conversation',
+                  ),
                 ),
                 const PopupMenuItem(
                   value: 'search',
@@ -754,7 +847,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ),
                 const PopupMenuItem(
                   value: 'delete_chat',
-                  child: Text('Delete conversation for me', style: TextStyle(color: Colors.redAccent)),
+                  child: Text(
+                    'Delete conversation for me',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
               ],
             ),
@@ -779,7 +875,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
             child: const Text(
               'Today',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: ChatColors.textSecondary),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: ChatColors.textSecondary,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -791,7 +891,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                    child: CircularProgressIndicator(
+                      color: ChatColors.primaryPurple,
+                    ),
                   );
                 }
 
@@ -817,8 +919,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
                 final messages = combinedMap.values.toList();
                 messages.sort((a, b) {
-                  final aDate = a.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                  final bDate = b.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final aDate =
+                      a.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final bDate =
+                      b.sentAt ?? DateTime.fromMillisecondsSinceEpoch(0);
                   return bDate.compareTo(aDate);
                 });
 
@@ -830,13 +934,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
                 if (filteredMessages.isEmpty) {
                   return const Center(
-                    child: Text('No messages found', style: ChatTextStyles.chatTileSubtitle),
+                    child: Text(
+                      'No messages found',
+                      style: ChatTextStyles.chatTileSubtitle,
+                    ),
                   );
                 }
 
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(vertical: ChatDimensions.paddingM),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: ChatDimensions.paddingM,
+                  ),
                   itemCount: filteredMessages.length,
                   itemBuilder: (context, index) {
                     final message = filteredMessages[index];
@@ -875,18 +984,30 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       _iBlocked
                           ? 'You have blocked this user. Unblock to send messages.'
                           : 'You cannot send messages in this conversation.',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   if (_iBlocked)
                     TextButton(
                       onPressed: () async {
                         if (widget.otherUserId != null) {
-                          await _chatRepository.unblockUser(widget.otherUserId!);
+                          await _chatRepository.unblockUser(
+                            widget.otherUserId!,
+                          );
                           await _checkBlockAndPreferences();
                         }
                       },
-                      child: const Text('Unblock', style: TextStyle(color: ChatColors.primaryPurple, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Unblock',
+                        style: TextStyle(
+                          color: ChatColors.primaryPurple,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                 ],
               ),

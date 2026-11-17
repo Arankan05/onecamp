@@ -8,11 +8,9 @@ class CampusRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  CampusRepository({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  CampusRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   // ---------- Firestore Collection References ----------
 
@@ -67,9 +65,11 @@ class CampusRepository {
     return _updatesCollection
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CampusUpdateModel.fromDocument(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CampusUpdateModel.fromDocument(doc))
+              .toList(),
+        );
   }
 
   /// Fetches a single campus update by document ID.
@@ -88,9 +88,11 @@ class CampusRepository {
         .where('category', isEqualTo: category)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CampusUpdateModel.fromDocument(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CampusUpdateModel.fromDocument(doc))
+              .toList(),
+        );
   }
 
   /// Live stream of urgent / pinned campus updates.
@@ -99,9 +101,11 @@ class CampusRepository {
         .where('isUrgent', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CampusUpdateModel.fromDocument(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CampusUpdateModel.fromDocument(doc))
+              .toList(),
+        );
   }
 
   // ---------- Management Operations (Admin / Staff Only) ----------
@@ -115,7 +119,8 @@ class CampusRepository {
     final allowed = await canManageUpdates();
     if (!allowed) {
       throw StateError(
-          'Permission denied: Only admin or staff accounts can create campus updates.');
+        'Permission denied: Only admin or staff accounts can create campus updates.',
+      );
     }
 
     final uid = currentUserId;
@@ -139,13 +144,13 @@ class CampusRepository {
     final allowed = await canManageUpdates();
     if (!allowed) {
       throw StateError(
-          'Permission denied: Only admin or staff accounts can update campus updates.');
+        'Permission denied: Only admin or staff accounts can update campus updates.',
+      );
     }
 
     final existingDoc = await _updatesCollection.doc(update.id).get();
     if (!existingDoc.exists) {
-      throw StateError(
-          'Campus update with ID ${update.id} does not exist.');
+      throw StateError('Campus update with ID ${update.id} does not exist.');
     }
 
     final updateData = update.toMap();
@@ -163,16 +168,15 @@ class CampusRepository {
     final allowed = await canManageUpdates();
     if (!allowed) {
       throw StateError(
-          'Permission denied: Only admin or staff accounts can delete campus updates.');
+        'Permission denied: Only admin or staff accounts can delete campus updates.',
+      );
     }
 
     final existingDoc = await _updatesCollection.doc(updateId).get();
     if (!existingDoc.exists) {
-      throw StateError(
-          'Campus update with ID $updateId does not exist.');
+      throw StateError('Campus update with ID $updateId does not exist.');
     }
 
     await _updatesCollection.doc(updateId).delete();
   }
 }
-

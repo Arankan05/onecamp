@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/onecamp_back_button.dart';
 import '../../../core/widgets/responsive_form_container.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_profile.dart';
@@ -14,8 +15,7 @@ class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() =>
-      _EditProfileScreenState();
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
@@ -125,11 +125,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in again.'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please log in again.')));
       return;
     }
 
@@ -139,9 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       String? imageUrl = _profileImageUrl;
 
       if (_selectedImage != null) {
-        imageUrl = await _cloudinaryService.uploadProfileImage(
-          _selectedImage!,
-        );
+        imageUrl = await _cloudinaryService.uploadProfileImage(_selectedImage!);
       }
 
       final success = await _profileController.updateProfile(
@@ -164,9 +159,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
-          ),
+          const SnackBar(content: Text('Profile updated successfully!')),
         );
 
         Navigator.pop(context, true);
@@ -174,8 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _profileController.errorMessage ??
-                  'Failed to update profile.',
+              _profileController.errorMessage ?? 'Failed to update profile.',
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -216,19 +208,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (_selectedImageBytes != null) {
       imageProvider = MemoryImage(_selectedImageBytes!);
-    } else if (_profileImageUrl != null &&
-        _profileImageUrl!.isNotEmpty) {
+    } else if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
       imageProvider = NetworkImage(_profileImageUrl!);
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F0FD),
       appBar: AppBar(
         title: const Text('Edit Profile'),
+        backgroundColor: const Color(0xFFF4F0FD),
+        elevation: 0,
+        leading: const OneCampBackButton(),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : ResponsiveFormContainer(
               maxWidth: 640,
               child: Form(
@@ -373,8 +366,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               enabled: !_isSaving,
                               decoration: const InputDecoration(
                                 labelText: 'University',
-                                prefixIcon:
-                                    Icon(Icons.account_balance_outlined),
+                                prefixIcon: Icon(
+                                  Icons.account_balance_outlined,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -409,8 +403,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               initialValue: _academicYear,
                               decoration: const InputDecoration(
                                 labelText: 'Academic Year',
-                                prefixIcon:
-                                    Icon(Icons.calendar_today_outlined),
+                                prefixIcon: Icon(Icons.calendar_today_outlined),
                               ),
                               items: [1, 2, 3, 4, 5]
                                   .map(

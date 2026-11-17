@@ -9,11 +9,9 @@ class EventRepository {
   final FirebaseFirestore? _customFirestore;
   final FirebaseAuth? _customAuth;
 
-  EventRepository({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _customFirestore = firestore,
-        _customAuth = auth;
+  EventRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _customFirestore = firestore,
+      _customAuth = auth;
 
   FirebaseFirestore get _firestore =>
       _customFirestore ?? FirebaseFirestore.instance;
@@ -25,8 +23,8 @@ class EventRepository {
       _firestore.collection(AppConstants.eventsCollection);
 
   CollectionReference<Map<String, dynamic>> _attendeesCollection(
-          String eventId) =>
-      _eventsCollection.doc(eventId).collection('attendees');
+    String eventId,
+  ) => _eventsCollection.doc(eventId).collection('attendees');
 
   /// The currently authenticated user's UID (falls back to test user ID when not signed in).
   String? get currentUserId {
@@ -48,7 +46,8 @@ class EventRepository {
 
     if (event.organizerId != uid) {
       throw ArgumentError(
-          'Organizer ID (${event.organizerId}) must match the current authenticated user ID ($uid).');
+        'Organizer ID (${event.organizerId}) must match the current authenticated user ID ($uid).',
+      );
     }
 
     final docRef = _eventsCollection.doc();
@@ -70,8 +69,9 @@ class EventRepository {
   Stream<List<EventModel>> watchEvents() {
     try {
       return _eventsCollection.snapshots().map((snapshot) {
-        final events =
-            snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
+        final events = snapshot.docs
+            .map((doc) => EventModel.fromDocument(doc))
+            .toList();
         events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
         return events;
       });
@@ -88,11 +88,12 @@ class EventRepository {
           .where('dateTime', isGreaterThanOrEqualTo: now)
           .snapshots()
           .map((snapshot) {
-        final events =
-            snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
-        events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-        return events;
-      });
+            final events = snapshot.docs
+                .map((doc) => EventModel.fromDocument(doc))
+                .toList();
+            events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+            return events;
+          });
     } catch (_) {
       return const Stream.empty();
     }
@@ -108,11 +109,12 @@ class EventRepository {
           .where('category', isEqualTo: category)
           .snapshots()
           .map((snapshot) {
-        final events =
-            snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
-        events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-        return events;
-      });
+            final events = snapshot.docs
+                .map((doc) => EventModel.fromDocument(doc))
+                .toList();
+            events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+            return events;
+          });
     } catch (_) {
       return const Stream.empty();
     }
@@ -127,11 +129,12 @@ class EventRepository {
           .where('organizerId', isEqualTo: organizerId)
           .snapshots()
           .map((snapshot) {
-        final events =
-            snapshot.docs.map((doc) => EventModel.fromDocument(doc)).toList();
-        events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-        return events;
-      });
+            final events = snapshot.docs
+                .map((doc) => EventModel.fromDocument(doc))
+                .toList();
+            events.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+            return events;
+          });
     } catch (_) {
       return Stream.value(const []);
     }
@@ -152,8 +155,10 @@ class EventRepository {
           } else {
             // Check subcollection for fallback
             try {
-              final attendeeDoc =
-                  await doc.reference.collection('attendees').doc(userId).get();
+              final attendeeDoc = await doc.reference
+                  .collection('attendees')
+                  .doc(userId)
+                  .get();
               if (attendeeDoc.exists) {
                 attendingEvents.add(event);
               }
@@ -189,7 +194,8 @@ class EventRepository {
     final existingOrganizerId = existingData?['organizerId'] as String?;
     if (existingOrganizerId != uid) {
       throw StateError(
-          'Permission denied: You are not the organizer of this event.');
+        'Permission denied: You are not the organizer of this event.',
+      );
     }
 
     final existingAttendeeCount =
@@ -216,11 +222,11 @@ class EventRepository {
       throw StateError('Event with ID $eventId does not exist.');
     }
 
-    final existingOrganizerId =
-        existingDoc.data()?['organizerId'] as String?;
+    final existingOrganizerId = existingDoc.data()?['organizerId'] as String?;
     if (existingOrganizerId != uid) {
       throw StateError(
-          'Permission denied: Only the organizer can delete this event.');
+        'Permission denied: Only the organizer can delete this event.',
+      );
     }
 
     await _eventsCollection.doc(eventId).delete();
@@ -230,7 +236,9 @@ class EventRepository {
 
   /// Registers the current user's attendance for an event.
   Future<void> registerAttendance(
-      String eventId, EventAttendeeModel attendee) async {
+    String eventId,
+    EventAttendeeModel attendee,
+  ) async {
     final uid = currentUserId;
     if (uid == null || uid.isEmpty) {
       throw StateError('User must be signed in to register for an event.');
@@ -273,8 +281,7 @@ class EventRepository {
     }
 
     if (userId != uid) {
-      throw ArgumentError(
-          'Users can only cancel their own event attendance.');
+      throw ArgumentError('Users can only cancel their own event attendance.');
     }
 
     // 1. Remove from attendees subcollection
@@ -308,10 +315,14 @@ class EventRepository {
       return _attendeesCollection(eventId)
           .orderBy('registeredAt', descending: false)
           .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) =>
-                  EventAttendeeModel.fromDocument(doc, eventId: eventId))
-              .toList());
+          .map(
+            (snapshot) => snapshot.docs
+                .map(
+                  (doc) =>
+                      EventAttendeeModel.fromDocument(doc, eventId: eventId),
+                )
+                .toList(),
+          );
     } catch (_) {
       return const Stream.empty();
     }

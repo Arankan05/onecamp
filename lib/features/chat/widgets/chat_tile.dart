@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/chat_model.dart';
 import '../theme/chat_colors.dart';
 import '../theme/chat_decorations.dart';
@@ -85,7 +86,9 @@ class ChatTile extends StatelessWidget {
                       Text(
                         chat.lastMessage != null && chat.lastMessage!.isNotEmpty
                             ? chat.lastMessage!
-                            : (chat.isGroup ? 'Group created' : 'Start a conversation'),
+                            : (chat.isGroup
+                                  ? 'Group created'
+                                  : 'Start a conversation'),
                         style: ChatTextStyles.chatTileSubtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

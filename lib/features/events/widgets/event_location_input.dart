@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+
 import '../controllers/event_controller.dart';
 
 /// Reusable UI component for entering event location details.
@@ -31,7 +32,9 @@ class EventLocationInput extends StatelessWidget {
         // 1. Manual Venue Name Input
         TextFormField(
           controller: locationTextController,
-          initialValue: locationTextController == null ? controller.locationName : null,
+          initialValue: locationTextController == null
+              ? controller.locationName
+              : null,
           decoration: const InputDecoration(
             labelText: 'Venue / Location Name *',
             hintText: 'e.g., Main Auditorium, Lecture Hall 3, Sports Complex',
@@ -66,8 +69,8 @@ class EventLocationInput extends StatelessWidget {
                   controller.isLoadingLocation
                       ? 'Acquiring GPS...'
                       : (controller.hasCoordinates
-                          ? 'Update Current GPS'
-                          : 'Use Current Location'),
+                            ? 'Update Current GPS'
+                            : 'Use Current Location'),
                 ),
                 onPressed: controller.isLoadingLocation
                     ? null
@@ -130,7 +133,10 @@ class EventLocationInput extends StatelessWidget {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     icon: const Icon(Icons.settings, size: 16),
-                    label: const Text('Open App Settings', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Open App Settings',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     onPressed: () => controller.openAppSettings(),
                   ),
                 ],

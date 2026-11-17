@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,7 +32,8 @@ class PresenceService with WidgetsBindingObserver {
   }) {
     if (_isInitialized) return;
 
-    _database = database ??
+    _database =
+        database ??
         FirebaseDatabase.instanceFor(
           app: Firebase.app(),
           databaseURL: databaseUrl,
@@ -57,11 +59,17 @@ class PresenceService with WidgetsBindingObserver {
 
     _cleanupSessionConnection();
 
-    final DatabaseReference userConnectionsRef = _database!.ref('status/$uid/connections');
-    final DatabaseReference lastSeenRef = _database!.ref('status/$uid/lastSeen');
+    final DatabaseReference userConnectionsRef = _database!.ref(
+      'status/$uid/connections',
+    );
+    final DatabaseReference lastSeenRef = _database!.ref(
+      'status/$uid/lastSeen',
+    );
     final DatabaseReference connectedRef = _database!.ref('.info/connected');
 
-    _connectionSubscription = connectedRef.onValue.listen((DatabaseEvent event) {
+    _connectionSubscription = connectedRef.onValue.listen((
+      DatabaseEvent event,
+    ) {
       final bool isConnected = (event.snapshot.value as bool?) ?? false;
 
       if (isConnected) {
@@ -78,9 +86,11 @@ class PresenceService with WidgetsBindingObserver {
         _myConnectionRef!.set(true);
 
         // Sync Firestore profile status
-        _firestore?.collection('users').doc(uid).update({
-          'isOnline': true,
-        }).catchError((_) {});
+        _firestore
+            ?.collection('users')
+            .doc(uid)
+            .update({'isOnline': true})
+            .catchError((_) {});
       }
     });
   }
@@ -91,9 +101,11 @@ class PresenceService with WidgetsBindingObserver {
 
     if (uid != null && _database != null) {
       _database!.ref('status/$uid/lastSeen').set(ServerValue.timestamp);
-      _firestore?.collection('users').doc(uid).update({
-        'isOnline': false,
-      }).catchError((_) {});
+      _firestore
+          ?.collection('users')
+          .doc(uid)
+          .update({'isOnline': false})
+          .catchError((_) {});
     }
   }
 
@@ -128,7 +140,9 @@ class PresenceService with WidgetsBindingObserver {
           if (userStatus is Map) {
             final connections = userStatus['connections'];
             if (connections is Map && connections.isNotEmpty) {
-              final bool hasValidConnection = connections.values.any((v) => v != null);
+              final bool hasValidConnection = connections.values.any(
+                (v) => v != null,
+              );
               if (hasValidConnection) {
                 onlineUids.add(uidKey.toString());
               }
@@ -153,7 +167,8 @@ class PresenceService with WidgetsBindingObserver {
 
   /// Stream presence metadata (isOnline, lastSeen) for a user from RTDB.
   Stream<Map<String, dynamic>> getUserPresenceStream(String uid) {
-    if (_database == null) return Stream.value({'isOnline': false, 'lastSeen': null});
+    if (_database == null)
+      return Stream.value({'isOnline': false, 'lastSeen': null});
 
     return _database!.ref('status/$uid').onValue.map((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
@@ -168,10 +183,7 @@ class PresenceService with WidgetsBindingObserver {
         lastSeen = DateTime.fromMillisecondsSinceEpoch(rawLastSeen);
       }
 
-      return {
-        'isOnline': isOnline,
-        'lastSeen': lastSeen,
-      };
+      return {'isOnline': isOnline, 'lastSeen': lastSeen};
     });
   }
 

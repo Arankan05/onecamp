@@ -43,11 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/',
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -66,14 +62,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: AnimatedBuilder(
         animation: _authController,
         builder: (context, child) {
-          final isLoading =
-              _authController.state.status == AuthStatus.loading;
+          final isLoading = _authController.state.status == AuthStatus.loading;
 
           return ResponsiveFormContainer(
             child: Form(
@@ -118,19 +111,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'Welcome Back!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Login to your OneCamp account',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
 
@@ -147,9 +134,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         return 'Please enter your email.';
                       }
 
-                      if (!RegExp(
-                        r'^[^@]+@[^@]+\.[^@]+$',
-                      ).hasMatch(value.trim())) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
+                          .hasMatch(value.trim())) {
                         return 'Please enter a valid email.';
                       }
 
@@ -195,10 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: isLoading
                           ? null
                           : () {
-                              Navigator.pushNamed(
-                                context,
-                                '/forgot-password',
-                              );
+                              Navigator.pushNamed(context, '/forgot-password');
                             },
                       child: const Text('Forgot Password?'),
                     ),
@@ -225,10 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: isLoading
                             ? null
                             : () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/register',
-                                );
+                                Navigator.pushNamed(context, '/register');
                               },
                         child: const Text('Register'),
                       ),

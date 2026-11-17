@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../core/services/presence_service.dart';
+import '../../profile/screens/other_user_profile_screen.dart';
 import '../models/chat_model.dart';
 import '../repositories/chat_repository.dart';
 import '../theme/chat_colors.dart';
@@ -14,10 +16,7 @@ import '../../../routes/app_routes.dart';
 class ChatListScreen extends StatefulWidget {
   final ChatRepository? chatRepository;
 
-  const ChatListScreen({
-    super.key,
-    this.chatRepository,
-  });
+  const ChatListScreen({super.key, this.chatRepository});
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -50,8 +49,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (profile != null && mounted) {
       setState(() {
         _userNamesCache[userId] =
-            profile['name'] as String? ?? profile['displayName'] as String? ?? profile['email'] as String? ?? 'User';
-        _userAvatarsCache[userId] = profile['photoUrl'] as String? ?? profile['avatarUrl'] as String?;
+            profile['name'] as String? ??
+            profile['displayName'] as String? ??
+            profile['email'] as String? ??
+            'User';
+        _userAvatarsCache[userId] =
+            profile['profileImageUrl'] as String? ??
+            profile['photoUrl'] as String? ??
+            profile['avatarUrl'] as String?;
       });
     }
   }
@@ -92,7 +97,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUid = _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
+    final currentUid =
+        _chatRepository.currentUserId ?? FirebaseAuth.instance.currentUser?.uid;
 
     if (currentUid == null || currentUid.isEmpty) {
       return Scaffold(
@@ -138,19 +144,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       color: ChatColors.primaryPurple,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.people_alt, color: Colors.white, size: 22),
+                    child: const Icon(
+                      Icons.people_alt,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: ChatDimensions.paddingM),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Messages', style: ChatTextStyles.headerTitle),
+                        const Text(
+                          'Messages',
+                          style: ChatTextStyles.headerTitle,
+                        ),
                         StreamBuilder<Set<String>>(
                           stream: PresenceService().getOnlineUserUidsStream(),
                           builder: (context, snapshot) {
                             final onlineUids = snapshot.data ?? {};
-                            final count = onlineUids.where((id) => id != currentUid).length;
+                            final count = onlineUids
+                                .where((id) => id != currentUid)
+                                .length;
                             return Text(
                               '$count ${count == 1 ? 'campus friend' : 'campus friends'} online',
                               style: ChatTextStyles.appBarSubtitle,
@@ -168,8 +183,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: ChatColors.textPrimary, size: 20),
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.newChat),
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: ChatColors.textPrimary,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.newChat),
                     ),
                   ),
                 ],
@@ -184,17 +204,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ),
               child: TextField(
                 controller: _searchController,
-                decoration: ChatDecorations.inputDecoration('Search conversations or students...').copyWith(
-                  prefixIcon: const Icon(Icons.search, color: ChatColors.primaryPurple),
-                  suffixIcon: Container(
-                    margin: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: ChatColors.cardBackground,
-                      shape: BoxShape.circle,
+                decoration:
+                    ChatDecorations.inputDecoration(
+                      'Search conversations or students...',
+                    ).copyWith(
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: ChatColors.primaryPurple,
+                      ),
+                      suffixIcon: Container(
+                        margin: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: ChatColors.cardBackground,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.tune,
+                          color: ChatColors.primaryPurple,
+                          size: 18,
+                        ),
+                      ),
                     ),
-                    child: const Icon(Icons.tune, color: ChatColors.primaryPurple, size: 18),
-                  ),
-                ),
                 onChanged: (val) {
                   setState(() => _searchQuery = val.trim().toLowerCase());
                 },
@@ -235,7 +265,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         stream: PresenceService().getOnlineUserUidsStream(),
                         builder: (context, snapshot) {
                           final onlineUids = snapshot.data ?? {};
-                          final onlineCount = onlineUids.where((id) => id != currentUid).length;
+                          final onlineCount = onlineUids
+                              .where((id) => id != currentUid)
+                              .length;
                           return Text(
                             '$onlineCount online',
                             style: const TextStyle(
@@ -266,12 +298,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       final allUsers = usersSnapshot.data ?? [];
                       final activeUsers = allUsers.where((u) {
                         final uid = u['uid'] as String?;
-                        return uid != null && uid != currentUid && onlineUids.contains(uid);
+                        return uid != null &&
+                            uid != currentUid &&
+                            onlineUids.contains(uid);
                       }).toList();
 
                       return ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: ChatDimensions.paddingL),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: ChatDimensions.paddingL,
+                        ),
                         itemCount: activeUsers.length + 1,
                         itemBuilder: (context, index) {
                           if (index == 0) {
@@ -286,12 +322,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       color: ChatColors.primaryPurple,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.add, color: Colors.white, size: 24),
+                                    child: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   const Text(
                                     'Radar',
-                                    style: TextStyle(fontSize: 11, color: ChatColors.textSecondary),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: ChatColors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -299,12 +342,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           }
 
                           final user = activeUsers[index - 1];
-                          final name = user['name'] as String? ?? user['displayName'] as String? ?? 'Student';
+                          final name =
+                              user['name'] as String? ??
+                              user['displayName'] as String? ??
+                              'Student';
                           final uid = user['uid'] as String?;
+                          final avatarUrl =
+                              user['profileImageUrl'] as String? ??
+                              user['photoUrl'] as String? ??
+                              user['avatarUrl'] as String?;
 
                           return GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.newChat);
+                              if (uid != null && uid.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        OtherUserProfileScreen(userId: uid),
+                                  ),
+                                );
+                              }
                             },
                             child: Container(
                               margin: const EdgeInsets.only(right: 14.0),
@@ -312,6 +370,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 children: [
                                   ChatAvatar(
                                     name: name,
+                                    imageUrl: avatarUrl,
                                     userId: uid,
                                     size: 50,
                                   ),
@@ -320,7 +379,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     width: 52,
                                     child: Text(
                                       name.split(' ')[0],
-                                      style: const TextStyle(fontSize: 11, color: ChatColors.textSecondary),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: ChatColors.textSecondary,
+                                      ),
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -364,7 +426,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                      child: CircularProgressIndicator(color: ChatColors.primaryPurple),
+                      child: CircularProgressIndicator(
+                        color: ChatColors.primaryPurple,
+                      ),
                     );
                   }
 
@@ -387,9 +451,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.forum_outlined, size: 56, color: ChatColors.primaryPurple),
+                          const Icon(
+                            Icons.forum_outlined,
+                            size: 56,
+                            color: ChatColors.primaryPurple,
+                          ),
                           const SizedBox(height: 12),
-                          const Text('No conversations yet', style: ChatTextStyles.chatTileTitle),
+                          const Text(
+                            'No conversations yet',
+                            style: ChatTextStyles.chatTileTitle,
+                          ),
                           const SizedBox(height: 4),
                           const Text(
                             'Tap New chat below to message a student!',
@@ -403,7 +474,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   // Apply Type Filter
                   final typeFiltered = chats.where((c) {
                     if (_selectedFilter == 'Direct') return !c.isGroup;
-                    if (_selectedFilter == 'Groups' || _selectedFilter == 'Clubs') return c.isGroup;
+                    if (_selectedFilter == 'Groups' ||
+                        _selectedFilter == 'Clubs')
+                      return c.isGroup;
                     return true;
                   }).toList();
 
@@ -413,19 +486,25 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final lastMsg = (chat.lastMessage ?? '').toLowerCase();
                     if (chat.isGroup) {
                       final groupName = (chat.groupName ?? '').toLowerCase();
-                      return groupName.contains(_searchQuery) || lastMsg.contains(_searchQuery);
+                      return groupName.contains(_searchQuery) ||
+                          lastMsg.contains(_searchQuery);
                     } else {
                       final otherId = chat.participantIds.firstWhere(
                         (id) => id != currentUid,
                         orElse: () => '',
                       );
-                      final otherName = (_userNamesCache[otherId] ?? '').toLowerCase();
-                      return otherName.contains(_searchQuery) || lastMsg.contains(_searchQuery);
+                      final otherName = (_userNamesCache[otherId] ?? '')
+                          .toLowerCase();
+                      return otherName.contains(_searchQuery) ||
+                          lastMsg.contains(_searchQuery);
                     }
                   }).toList();
 
                   return ListView.builder(
-                    padding: const EdgeInsets.only(top: ChatDimensions.paddingXS, bottom: 80),
+                    padding: const EdgeInsets.only(
+                      top: ChatDimensions.paddingXS,
+                      bottom: 80,
+                    ),
                     itemCount: filteredChats.length,
                     itemBuilder: (context, index) {
                       final chat = filteredChats[index];
@@ -453,15 +532,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           orElse: () => '',
                         );
 
-                        if (otherId.isNotEmpty && !_userNamesCache.containsKey(otherId)) {
+                        if (otherId.isNotEmpty &&
+                            !_userNamesCache.containsKey(otherId)) {
                           _loadOtherUserProfile(otherId);
                         }
 
                         final title = _userNamesCache[otherId] ?? 'Student';
+                        final avatarUrl = _userAvatarsCache[otherId];
 
                         return ChatTile(
                           chat: chat,
                           title: title,
+                          avatarUrl: avatarUrl,
                           otherUserId: otherId,
                           onTap: () {
                             Navigator.pushNamed(
@@ -471,6 +553,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 'chatId': chat.chatId,
                                 'title': title,
                                 'isGroup': false,
+                                'avatarUrl': avatarUrl,
                                 'participantIds': chat.participantIds,
                                 'otherUserId': otherId,
                               },

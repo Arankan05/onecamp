@@ -1,8 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_form_container.dart';
+import '../../feed/controllers/feed_controller.dart';
+import '../../feed/models/post_model.dart';
+import '../../feed/repositories/follow_repository.dart';
+import '../../feed/screens/post_details_screen.dart';
+import '../../feed/screens/student_list_screen.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_profile.dart';
 
@@ -15,6 +20,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileController _profileController;
+  final FollowRepository _followRepository = FollowRepository();
+  final FeedController _feedController = FeedController();
   bool _isLoggingOut = false;
 
   @override
@@ -72,11 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (!mounted) return;
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     } catch (error) {
       if (!mounted) return;
 
@@ -98,18 +101,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (currentUser == null) {
       return const Scaffold(
-        body: Center(
-          child: Text('Please log in to view your profile.'),
-        ),
+        body: Center(child: Text('Please log in to view your profile.')),
       );
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.primaryBackground,
       appBar: AppBar(
         title: const Text('My Profile'),
+        backgroundColor: AppTheme.primaryBackground,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
             tooltip: 'Edit Profile',
             onPressed: _isLoggingOut
                 ? null
@@ -125,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout_rounded, color: Colors.red),
             tooltip: 'Logout',
             onPressed: _isLoggingOut ? null : _confirmLogout,
           ),
@@ -172,6 +176,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           // 1. Header Card (Profile Picture, Name, Email, Role)
           Card(
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24.0),
@@ -194,11 +202,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: CircleAvatar(
                       radius: 42,
                       backgroundColor: AppTheme.secondaryColor,
-                      backgroundImage: profile.profileImageUrl != null &&
+                      backgroundImage:
+                          profile.profileImageUrl != null &&
                               profile.profileImageUrl!.isNotEmpty
                           ? NetworkImage(profile.profileImageUrl!)
                           : null,
-                      child: profile.profileImageUrl == null ||
+                      child:
+                          profile.profileImageUrl == null ||
                               profile.profileImageUrl!.isEmpty
                           ? Icon(
                               Icons.person,
@@ -219,6 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -265,7 +276,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     profile.email,
                     style: TextStyle(
                       fontSize: 14,
-                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white70 : const Color(0xFF1F2937),
                     ),
                   ),
 
@@ -286,6 +298,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Real Followers / Following Counters
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0C7C3AED),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StudentListScreen(
+                                  initialFilter: 'Followers',
+                                  targetUserId: profile.uid,
+                                ),
+                              ),
+                            );
+                          },
+                          child: StreamBuilder<int>(
+                            stream: _followRepository.getFollowersCount(
+                              profile.uid,
+                            ),
+                            builder: (context, snapshot) {
+                              return _buildStatColumn(
+                                '${snapshot.data ?? 0}',
+                                'Followers',
+                              );
+                            },
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 24,
+                          color: Colors.grey.shade200,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StudentListScreen(
+                                  initialFilter: 'Following',
+                                  targetUserId: profile.uid,
+                                ),
+                              ),
+                            );
+                          },
+                          child: StreamBuilder<int>(
+                            stream: _followRepository.getFollowingCount(
+                              profile.uid,
+                            ),
+                            builder: (context, snapshot) {
+                              return _buildStatColumn(
+                                '${snapshot.data ?? 0}',
+                                'Following',
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -295,6 +386,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // 2. "About You" White Rounded Card
           Card(
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -493,6 +588,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // 3. "Academic Information" White Rounded Card
           Card(
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -562,13 +661,140 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           const SizedBox(height: 16),
+
+          // 4. "My Authored Posts" Stream Section (Requirement 3)
+          _buildMyPostsSection(profile.uid, theme),
+
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  /// Builds an individual, light-coloured rounded information box
-  /// with a purple icon, small grey uppercase label, and saved value.
+  Widget _buildMyPostsSection(String userId, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            'My Authored Posts',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+        ),
+        StreamBuilder<List<PostModel>>(
+          stream: _feedController.postsStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final allPosts = snapshot.data ?? [];
+            final myPosts = allPosts
+                .where((p) => p.authorId == userId)
+                .toList();
+
+            if (myPosts.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Text(
+                    'No posts published yet.',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: myPosts.map((post) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x0C7C3AED),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    title: Text(
+                      post.content,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        post.createdAt.toLocal().toString().split('.')[0],
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PostDetailsScreen(post: post),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatColumn(String number, String label) {
+    return Column(
+      children: [
+        Text(
+          number,
+          style: const TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 2.0),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11.0, color: Colors.grey.shade600),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInfoBox({
     required String label,
     required String value,
@@ -600,16 +826,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0x803730A3)
-                  : AppTheme.secondaryColor,
+              color: isDark ? const Color(0x803730A3) : AppTheme.secondaryColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: theme.colorScheme.primary,
-            ),
+            child: Icon(icon, size: 20, color: theme.colorScheme.primary),
           ),
           const SizedBox(width: 14),
           Expanded(

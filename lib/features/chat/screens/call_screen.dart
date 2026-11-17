@@ -1,7 +1,11 @@
 import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+
 import '../../../core/services/call_service.dart';
+import '../repositories/chat_repository.dart';
 import '../theme/chat_colors.dart';
 import '../widgets/chat_avatar.dart';
 
@@ -39,6 +43,8 @@ class _CallScreenState extends State<CallScreen> {
   bool _isAudioMuted = false;
   bool _isVideoOff = false;
   bool _isCallConnected = false;
+  bool _recordedHistory = false;
+  DateTime? _connectedTime;
   String _callStatusText = 'Connecting...';
 
   @override
@@ -53,7 +59,8 @@ class _CallScreenState extends State<CallScreen> {
 
     if (widget.isIncoming && widget.initialCall != null) {
       _currentCall = widget.initialCall;
-      _callStatusText = 'Incoming ${widget.initialCall!.isVideo ? 'Video' : 'Audio'} Call...';
+      _callStatusText =
+          'Incoming ${widget.initialCall!.isVideo ? 'Video' : 'Audio'} Call...';
       _subscribeToCall(widget.initialCall!.callId);
     } else if (widget.targetId != null && widget.chatId != null) {
       _startOutgoingCall();
@@ -64,14 +71,23 @@ class _CallScreenState extends State<CallScreen> {
     _callSubscription = _callService.getCallStream(callId).listen((call) {
       if (!mounted) return;
 
-      if (call == null || call.status == CallStatus.ended || call.status == CallStatus.declined) {
-        _endCallAndPop(statusMessage: 'Call ${call?.status == CallStatus.declined ? 'Declined' : 'Ended'}');
+      if (call == null ||
+          call.status == CallStatus.ended ||
+          call.status == CallStatus.declined) {
+        _endCallAndPop(
+          statusMessage:
+              'Call ${call?.status == CallStatus.declined ? 'Declined' : 'Ended'}',
+          outcome: call?.status == CallStatus.declined ? 'declined' : null,
+        );
         return;
       }
 
       setState(() {
         _currentCall = call;
         if (call.status == CallStatus.active) {
+          if (!_isCallConnected) {
+            _connectedTime = DateTime.now();
+          }
           _isCallConnected = true;
           _callStatusText = 'Connected';
         } else if (call.status == CallStatus.ringing) {
@@ -85,7 +101,9 @@ class _CallScreenState extends State<CallScreen> {
 
   Future<void> _startOutgoingCall() async {
     try {
-      setState(() => _callStatusText = 'Calling ${widget.targetName ?? 'Student'}...');
+      setState(
+        () => _callStatusText = 'Calling ${widget.targetName ?? 'Student'}...',
+      );
 
       final callId = await _callService.startCall(
         targetId: widget.targetId!,
@@ -157,7 +175,43 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  Future<void> _endCallAndPop({String? statusMessage}) async {
+  Future<void> _endCallAndPop({String? statusMessage, String? outcome}) async {
+    if (!_recordedHistory) {
+      _recordedHistory = true;
+      final chatId = widget.chatId ?? _currentCall?.chatId;
+      final callerId =
+          _currentCall?.callerId ??
+          (widget.isIncoming
+              ? widget.targetId
+              : FirebaseAuth.instance.currentUser?.uid);
+      final targetId = widget.targetId ?? _currentCall?.targetId;
+
+      if (chatId != null && chatId.isNotEmpty && callerId != null) {
+        int durationSeconds = 0;
+        if (_connectedTime != null) {
+          durationSeconds = DateTime.now()
+              .difference(_connectedTime!)
+              .inSeconds;
+        }
+
+        String finalOutcome = outcome ?? 'completed';
+        if (!_isCallConnected && finalOutcome == 'completed') {
+          finalOutcome = 'missed';
+        }
+
+        try {
+          await ChatRepository().addCallMessage(
+            chatId: chatId,
+            callerId: callerId,
+            targetId: targetId ?? '',
+            isVideo: widget.isVideo || (_currentCall?.isVideo ?? false),
+            callOutcome: finalOutcome,
+            durationSeconds: durationSeconds,
+          );
+        } catch (_) {}
+      }
+    }
+
     if (_currentCall != null) {
       await _callService.endCall(_currentCall!.callId);
     }
@@ -169,9 +223,8 @@ class _CallScreenState extends State<CallScreen> {
 
     if (mounted) {
       if (statusMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(statusMessage)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(statusMessage)));
       }
       Navigator.of(context).pop();
     }
@@ -189,7 +242,8 @@ class _CallScreenState extends State<CallScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isVideoCall = widget.isVideo || (_currentCall?.isVideo ?? false);
-    final String displayName = widget.targetName ?? _currentCall?.callerName ?? 'Student';
+    final String displayName =
+        widget.targetName ?? _currentCall?.callerName ?? 'Student';
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1433),
@@ -199,17 +253,17 @@ class _CallScreenState extends State<CallScreen> {
             // Remote Video Renderer / Background View
             if (isVideoCall && _isCallConnected)
               Positioned.fill(
-                child: RTCVideoView(_remoteRenderer, objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover),
+                child: RTCVideoView(
+                  _remoteRenderer,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                ),
               )
             else
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ChatAvatar(
-                      name: displayName,
-                      size: 110,
-                    ),
+                    ChatAvatar(name: displayName, size: 110),
                     const SizedBox(height: 20),
                     Text(
                       displayName,
@@ -242,7 +296,12 @@ class _CallScreenState extends State<CallScreen> {
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     color: Colors.black54,
-                    child: RTCVideoView(_localRenderer, mirror: true, objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover),
+                    child: RTCVideoView(
+                      _localRenderer,
+                      mirror: true,
+                      objectFit:
+                          RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    ),
                   ),
                 ),
               ),
@@ -256,15 +315,23 @@ class _CallScreenState extends State<CallScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Incoming Call Action Buttons (Accept / Reject)
-                  if (widget.isIncoming && !_isCallConnected && _currentCall?.status == CallStatus.ringing)
+                  if (widget.isIncoming &&
+                      !_isCallConnected &&
+                      _currentCall?.status == CallStatus.ringing)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         FloatingActionButton(
                           heroTag: 'reject_btn',
                           backgroundColor: Colors.redAccent,
-                          onPressed: () => _endCallAndPop(statusMessage: 'Call Declined'),
-                          child: const Icon(Icons.call_end, color: Colors.white),
+                          onPressed: () => _endCallAndPop(
+                            statusMessage: 'Call Declined',
+                            outcome: 'declined',
+                          ),
+                          child: const Icon(
+                            Icons.call_end,
+                            color: Colors.white,
+                          ),
                         ),
                         FloatingActionButton(
                           heroTag: 'accept_btn',
@@ -285,7 +352,9 @@ class _CallScreenState extends State<CallScreen> {
                           color: Colors.white,
                           iconSize: 28,
                           style: IconButton.styleFrom(
-                            backgroundColor: _isAudioMuted ? Colors.redAccent : const Color(0x33FFFFFF),
+                            backgroundColor: _isAudioMuted
+                                ? Colors.redAccent
+                                : const Color(0x33FFFFFF),
                             padding: const EdgeInsets.all(16),
                           ),
                           onPressed: _toggleMute,
@@ -297,17 +366,25 @@ class _CallScreenState extends State<CallScreen> {
                           backgroundColor: Colors.redAccent,
                           elevation: 6,
                           onPressed: () => _endCallAndPop(),
-                          child: const Icon(Icons.call_end, color: Colors.white, size: 28),
+                          child: const Icon(
+                            Icons.call_end,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                         ),
 
                         // Camera Off Button (Video Call Only)
                         if (isVideoCall)
                           IconButton(
-                            icon: Icon(_isVideoOff ? Icons.videocam_off : Icons.videocam),
+                            icon: Icon(
+                              _isVideoOff ? Icons.videocam_off : Icons.videocam,
+                            ),
                             color: Colors.white,
                             iconSize: 28,
                             style: IconButton.styleFrom(
-                              backgroundColor: _isVideoOff ? Colors.redAccent : const Color(0x33FFFFFF),
+                              backgroundColor: _isVideoOff
+                                  ? Colors.redAccent
+                                  : const Color(0x33FFFFFF),
                               padding: const EdgeInsets.all(16),
                             ),
                             onPressed: _toggleVideo,

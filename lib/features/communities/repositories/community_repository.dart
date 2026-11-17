@@ -9,7 +9,7 @@ import '../models/community_post.dart';
 
 class CommunityRepository {
   CommunityRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -29,10 +29,10 @@ class CommunityRepository {
           .collection(CommunityConstants.postsCollection);
 
   CollectionReference<Map<String, dynamic>> _announcements(
-          String communityId) =>
-      _communities
-          .doc(communityId)
-          .collection(CommunityConstants.announcementsCollection);
+    String communityId,
+  ) => _communities
+      .doc(communityId)
+      .collection(CommunityConstants.announcementsCollection);
 
   // ---------- Communities ----------
 
@@ -41,9 +41,11 @@ class CommunityRepository {
     return _communities
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Community.fromMap(doc.id, doc.data()))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Community.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   /// Live data for one community.
@@ -111,9 +113,11 @@ class CommunityRepository {
     return _members(communityId)
         .orderBy('joinedAt')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CommunityMember.fromMap(doc.id, doc.data()))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CommunityMember.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   // ---------- Posts (discussions) ----------
@@ -122,9 +126,11 @@ class CommunityRepository {
     return _posts(communityId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CommunityPost.fromMap(doc.id, doc.data()))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CommunityPost.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   Future<void> addPost({
@@ -147,9 +153,11 @@ class CommunityRepository {
     return _announcements(communityId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Announcement.fromMap(doc.id, doc.data()))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Announcement.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   /// Only the community creator is allowed by the security rules.

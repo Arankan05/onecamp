@@ -46,7 +46,8 @@ class MessageModel {
   });
 
   bool get isText => messageType == 'text';
-  bool get isImage => messageType == 'image' || (imageUrl != null && imageUrl!.isNotEmpty);
+  bool get isImage =>
+      messageType == 'image' || (imageUrl != null && imageUrl!.isNotEmpty);
   bool get isDocument => messageType == 'document';
   bool get isAudio => messageType == 'audio';
   bool get isVoice => messageType == 'voice';
@@ -126,7 +127,8 @@ class MessageModel {
       durationSeconds: map['durationSeconds'] as int?,
       messageType: map['messageType'] as String? ?? 'text',
       sentAt: parseDateTime(map['sentAt']),
-      readBy: (map['readBy'] as List<dynamic>?)
+      readBy:
+          (map['readBy'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -136,7 +138,8 @@ class MessageModel {
       isForwarded: map['isForwarded'] as bool? ?? false,
       forwardedFrom: map['forwardedFrom'] as String?,
       isDeleted: map['isDeleted'] as bool? ?? false,
-      hiddenFor: (map['hiddenFor'] as List<dynamic>?)
+      hiddenFor:
+          (map['hiddenFor'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],

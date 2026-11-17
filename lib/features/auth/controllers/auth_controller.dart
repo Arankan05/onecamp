@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,7 +10,7 @@ class AuthController extends ChangeNotifier {
   AuthState _state = AuthState.initial();
 
   AuthController({AuthRepository? authRepository})
-      : _authRepository = authRepository ?? AuthRepository();
+    : _authRepository = authRepository ?? AuthRepository();
 
   AuthState get state => _state;
 
@@ -62,24 +61,16 @@ class AuthController extends ChangeNotifier {
       _setState(AuthState.error(_getErrorMessage(error)));
       return false;
     } catch (_) {
-      _setState(
-        AuthState.error('Registration failed. Please try again.'),
-      );
+      _setState(AuthState.error('Registration failed. Please try again.'));
       return false;
     }
   }
 
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     _setState(AuthState.loading());
 
     try {
-      await _authRepository.login(
-        email: email,
-        password: password,
-      );
+      await _authRepository.login(email: email, password: password);
 
       _setState(AuthState.success());
       return true;
@@ -87,9 +78,7 @@ class AuthController extends ChangeNotifier {
       _setState(AuthState.error(_getErrorMessage(error)));
       return false;
     } catch (_) {
-      _setState(
-        AuthState.error('Login failed. Please try again.'),
-      );
+      _setState(AuthState.error('Login failed. Please try again.'));
       return false;
     }
   }
@@ -103,9 +92,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<bool> resetPassword({
-    required String email,
-  }) async {
+  Future<bool> resetPassword({required String email}) async {
     _setState(AuthState.loading());
 
     try {
@@ -116,9 +103,7 @@ class AuthController extends ChangeNotifier {
       _setState(AuthState.error(_getErrorMessage(error)));
       return false;
     } catch (_) {
-      _setState(
-        AuthState.error('Password reset failed. Please try again.'),
-      );
+      _setState(AuthState.error('Password reset failed. Please try again.'));
       return false;
     }
   }
