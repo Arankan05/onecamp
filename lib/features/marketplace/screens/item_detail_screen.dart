@@ -245,23 +245,32 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: Text('Make an Offer for ${_item.title}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Enter your offer price in \$:'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: offerController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter your offer price in \$:',
+                style: TextStyle(
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              decoration: const InputDecoration(
-                prefixText: '\$ ',
-                labelText: 'Offer Amount',
+              const SizedBox(height: 12),
+              TextField(
+                controller: offerController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  prefixText: '\$ ',
+                  labelText: 'Offer Amount',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -491,13 +500,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     children: [
                       Text(
                         _timeAgo,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Color(0xFF4B5563),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text('•', style: TextStyle(color: Colors.grey)),
+                      const Text(
+                        '•',
+                        style: TextStyle(color: Color(0xFF6B7280)),
+                      ),
                       const SizedBox(width: 8),
                       Chip(
                         label: Text(
@@ -589,9 +601,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               Text(
                                 _sellerProfile?['university'] as String? ??
                                     'Verified Student',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                  color: Color(0xFF4B5563),
                                 ),
                               ),
                             ],

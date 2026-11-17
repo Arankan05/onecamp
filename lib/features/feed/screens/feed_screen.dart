@@ -85,7 +85,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   child: Text(
                     "What's on your mind? Share with campus...",
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Color(0xFF6B7280),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -384,7 +384,10 @@ class _FeedScreenState extends State<FeedScreen> {
                         ? 'Follow students to see their posts here!'
                         : 'Be the first to share something!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -473,14 +476,6 @@ class _FeedScreenState extends State<FeedScreen> {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                   color: darkText,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'OneCamp Student',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
                                 ),
                               ),
                             ],
@@ -582,7 +577,15 @@ class _FeedScreenState extends State<FeedScreen> {
               const SizedBox(height: 16),
 
               // Post content
-              if (post.content.isNotEmpty) Text(post.content),
+              if (post.content.isNotEmpty)
+                Text(
+                  post.content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: darkText,
+                    height: 1.4,
+                  ),
+                ),
 
               // Post image
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
@@ -606,7 +609,7 @@ class _FeedScreenState extends State<FeedScreen> {
               // Post date
               Text(
                 post.createdAt.toLocal().toString().split('.')[0],
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
               ),
 
               const Divider(),

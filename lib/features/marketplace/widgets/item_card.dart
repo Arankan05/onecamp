@@ -124,8 +124,12 @@ class ItemCard extends StatelessWidget {
 
               // Item Metadata Container
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Formatted LKR Price
@@ -152,7 +156,7 @@ class ItemCard extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
 
                     // Category Tag / Location Info
                     Text(
@@ -162,8 +166,9 @@ class ItemCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: MarketplaceTheme.textSecondary,
+                        color: Color(0xFF4B5563),
                         fontSize: 11,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

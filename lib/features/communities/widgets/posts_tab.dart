@@ -66,7 +66,15 @@ class _PostsTabState extends State<PostsTab> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return const Center(child: Text('Could not load posts.'));
+                return const Center(
+                  child: Text(
+                    'Could not load posts.',
+                    style: TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 15,
+                    ),
+                  ),
+                );
               }
               final posts = snapshot.data ?? [];
               if (posts.isEmpty) {
@@ -74,6 +82,11 @@ class _PostsTabState extends State<PostsTab> {
                   child: Text(
                     'No posts yet.\nStart the discussion!',
                     textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 );
               }
@@ -82,13 +95,30 @@ class _PostsTabState extends State<PostsTab> {
                 itemBuilder: (context, index) {
                   final post = posts[index];
                   return Card(
+                    elevation: 1.5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     margin: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 4,
+                      vertical: 6,
                     ),
                     child: ListTile(
-                      title: Text(post.text),
-                      subtitle: Text('Member ${_shortId(post.authorId)}'),
+                      title: Text(
+                        post.text,
+                        style: const TextStyle(
+                          color: Color(0xFF1F2937),
+                          fontSize: 14,
+                          height: 1.3,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Member ${_shortId(post.authorId)}',
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -103,7 +133,13 @@ class _PostsTabState extends State<PostsTab> {
             if (!isMember) {
               return const Padding(
                 padding: EdgeInsets.all(12),
-                child: Text('Join this community to post.'),
+                child: Text(
+                  'Join this community to post.',
+                  style: TextStyle(
+                    color: Color(0xFF4B5563),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               );
             }
             return Padding(

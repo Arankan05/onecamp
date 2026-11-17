@@ -95,7 +95,15 @@ class _CommunityDetailsScreenState extends State<CommunityDetailsScreen> {
               bottom: const TabBar(
                 indicatorColor: AppTheme.primaryColor,
                 labelColor: AppTheme.primaryColor,
-                unselectedLabelColor: Colors.grey,
+                unselectedLabelColor: Color(0xFF6B7280),
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
                 indicatorWeight: 3,
                 tabs: [
                   Tab(text: 'Posts'),

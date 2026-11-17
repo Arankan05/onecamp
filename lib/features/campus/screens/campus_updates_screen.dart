@@ -65,13 +65,14 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
                   const Icon(
                     Icons.campaign_outlined,
                     size: 64,
-                    color: Colors.grey,
+                    color: Color(0xFF9CA3AF),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'No official campus updates posted yet.',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.grey,
+                      color: const Color(0xFF4B5563),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -124,7 +125,8 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
                           Text(
                             update.createdAt.toString().split(' ')[0],
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey,
+                              color: const Color(0xFF6B7280),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -134,17 +136,24 @@ class _CampusUpdatesScreenState extends State<CampusUpdatesScreen> {
                         update.title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1F2937),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(update.body, style: theme.textTheme.bodyMedium),
+                      Text(
+                        update.body,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF374151),
+                          height: 1.4,
+                        ),
+                      ),
                       if (update.authorName.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Text(
                           'Posted by ${update.authorName}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontStyle: FontStyle.italic,
-                            color: Colors.grey.shade600,
+                            color: const Color(0xFF4B5563),
                           ),
                         ),
                       ],

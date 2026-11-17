@@ -60,7 +60,10 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
                 hintText: 'Search communities...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 14,
+                ),
                 prefixIcon: const Icon(
                   Icons.search_rounded,
                   color: AppTheme.primaryColor,
@@ -227,7 +230,7 @@ class _CommunityListScreenState extends State<CommunityListScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          color: Color(0xFF4B5563),
                         ),
                       ),
                     ),

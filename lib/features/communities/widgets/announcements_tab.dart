@@ -24,34 +24,49 @@ class AnnouncementsTab extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('New announcement'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: titleController,
-                  maxLength: 80,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                  validator: (value) {
-                    final text = value?.trim() ?? '';
-                    if (text.length < 3) return 'At least 3 characters';
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: bodyController,
-                  maxLength: 500,
-                  maxLines: 4,
-                  decoration: const InputDecoration(labelText: 'Message'),
-                  validator: (value) {
-                    final text = value?.trim() ?? '';
-                    if (text.length < 5) return 'At least 5 characters';
-                    return null;
-                  },
-                ),
-              ],
+          title: const Text(
+            'New announcement',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    maxLength: 80,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'Announcement headline...',
+                    ),
+                    validator: (value) {
+                      final text = value?.trim() ?? '';
+                      if (text.length < 3) return 'At least 3 characters';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: bodyController,
+                    maxLength: 500,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Message',
+                      hintText: 'Write announcement details...',
+                    ),
+                    validator: (value) {
+                      final text = value?.trim() ?? '';
+                      if (text.length < 5) return 'At least 5 characters';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -114,11 +129,29 @@ class AnnouncementsTab extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Could not load announcements.'));
+            return const Center(
+              child: Text(
+                'Could not load announcements.',
+                style: TextStyle(
+                  color: Color(0xFF4B5563),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
           }
           final items = snapshot.data ?? [];
           if (items.isEmpty) {
-            return const Center(child: Text('No announcements yet.'));
+            return const Center(
+              child: Text(
+                'No announcements yet.',
+                style: TextStyle(
+                  color: Color(0xFF4B5563),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
           }
           return ListView.builder(
             padding: const EdgeInsets.all(12),
@@ -126,10 +159,32 @@ class AnnouncementsTab extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = items[index];
               return Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ListTile(
-                  leading: const Icon(Icons.campaign),
-                  title: Text(item.title),
-                  subtitle: Text(item.body),
+                  leading: const Icon(
+                    Icons.campaign_rounded,
+                    color: Color(0xFF7C3AED),
+                    size: 28,
+                  ),
+                  title: Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
+                      fontSize: 15,
+                    ),
+                  ),
+                  subtitle: Text(
+                    item.body,
+                    style: const TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 13,
+                      height: 1.3,
+                    ),
+                  ),
                 ),
               );
             },

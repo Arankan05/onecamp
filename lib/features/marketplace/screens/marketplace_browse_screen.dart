@@ -135,8 +135,8 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search textbooks, tech, furniture...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade400,
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF6B7280),
                     fontSize: 14,
                   ),
                   prefixIcon: const Icon(
@@ -274,7 +274,7 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
                               'OneCamp requires an authenticated student session to browse listings.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: Color(0xFF4B5563),
                                 fontSize: 13,
                               ),
                             ),
@@ -391,8 +391,8 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
                           ),
                           Text(
                             '${items.length} ${items.length == 1 ? 'item' : 'items'}',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
+                            style: const TextStyle(
+                              color: Color(0xFF4B5563),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -431,8 +431,8 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
                                           ? 'Be the first student to post a listing!'
                                           : 'No items in $_selectedCategory.',
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                      style: const TextStyle(
+                                        color: Color(0xFF4B5563),
                                         fontSize: 13,
                                       ),
                                     ),
@@ -446,7 +446,7 @@ class _MarketplaceBrowseScreenState extends State<MarketplaceBrowseScreen> {
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
-                                    childAspectRatio: 0.70,
+                                    childAspectRatio: 0.64,
                                     crossAxisSpacing: 12,
                                     mainAxisSpacing: 12,
                                   ),

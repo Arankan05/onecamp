@@ -26,12 +26,22 @@ class MembersTab extends StatelessWidget {
         }
 
         if (snapshot.hasError) {
-          return const Center(child: Text('Could not load members.'));
+          return const Center(
+            child: Text(
+              'Could not load members.',
+              style: TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+            ),
+          );
         }
 
         final members = snapshot.data ?? [];
         if (members.isEmpty) {
-          return const Center(child: Text('No members yet.'));
+          return const Center(
+            child: Text(
+              'No members yet.',
+              style: TextStyle(color: Color(0xFF4B5563), fontSize: 15),
+            ),
+          );
         }
 
         return ListView.builder(
@@ -39,10 +49,35 @@ class MembersTab extends StatelessWidget {
           itemBuilder: (context, index) {
             final member = members[index];
             final isCreator = member.role == CommunityConstants.roleCreator;
-            return ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: Text('Member ${_shortId(member.userId)}'),
-              subtitle: isCreator ? const Text('Creator') : null,
+            return Card(
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFFDDD6FE),
+                  child: const Icon(Icons.person, color: Color(0xFF7C3AED)),
+                ),
+                title: Text(
+                  'Member ${_shortId(member.userId)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                subtitle: isCreator
+                    ? const Text(
+                        'Creator',
+                        style: TextStyle(
+                          color: Color(0xFF7C3AED),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      )
+                    : null,
+              ),
             );
           },
         );

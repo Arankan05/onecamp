@@ -235,10 +235,10 @@ class HomeScreen extends StatelessWidget {
                 color: Color(0xFF1F2937),
               ),
             ),
-            SizedBox(height: 2),
-            Text(
+            const SizedBox(height: 2),
+            const Text(
               'Connect with students across your campus',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
             ),
           ],
         ),
@@ -292,7 +292,7 @@ class HomeScreen extends StatelessWidget {
               child: Text(
                 'No other students found yet.',
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: Color(0xFF4B5563),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -540,9 +540,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                const Text(
                   'Be the first student to share news or updates!',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
                 ),
               ],
             ),
@@ -909,11 +909,11 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(width: 12.0),
-                Expanded(
+                const Expanded(
                   child: Text(
                     "What's on your mind? Share with campus...",
                     style: TextStyle(
-                      color: Colors.grey.shade500,
+                      color: Color(0xFF6B7280),
                       fontSize: 14.0,
                       fontWeight: FontWeight.w500,
                     ),
